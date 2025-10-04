@@ -12,10 +12,9 @@ graph LR
   A <-- Auth --> C[Supabase Auth]
   A <-- Storage --> D[Supabase Storage]
   A <---> E[Edge Functions (optional)]
-
-
-## Login → Load Data → Save Flow
-```mermaid
+Login → Load Data → Save Flow
+mermaid
+Copy code
 sequenceDiagram
   participant U as User
   participant W as Next.js App
@@ -28,3 +27,21 @@ sequenceDiagram
   U->>W: edit a value
   W->>S: update row
   S-->>W: success
+Boundaries (simple rules)
+Auth lives in Supabase.
+
+Data lives in Postgres (Supabase).
+
+Web app only talks to Supabase.
+
+Row-Level Security (RLS) protects rows (owners see only their stuff; admins see all; coaches see assigned clients).
+
+Non-functional notes
+Security: RLS on every table before launch.
+
+CI: GitHub Actions runs build + tests on every PR.
+
+Observability: console logs + simple error states for now.
+
+Links
+Discovery: docs/discovery-brief.md

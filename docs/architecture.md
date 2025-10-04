@@ -1,17 +1,20 @@
-# Architecture (Phase 0)
-
+## Architecture (Phase 0)
 ## Components
-- Web App: Next.js hosted on Vercel  
-- Backend: Supabase (Auth, Database, Storage, Edge Functions)  
-- Optional: External APIs later  
+
+Web App: Next.js hosted on Vercel
+
+Backend: Supabase (Auth, Database, Storage, Edge Functions)
+
+Optional: External APIs later
 
 ## Diagram (components)
-```mermaid
+
 graph LR
     A[Next.js App on Vercel] --- B[Supabase Database]
     A --- C[Supabase Auth]
     A --- D[Supabase Storage]
     A --- E[Edge Functions]
+
 
 ## Login → Load Data → Save Flow
 
@@ -28,22 +31,24 @@ sequenceDiagram
     W->>S: update row
     S-->>W: confirm success
 
-
 Boundaries (simple rules)
-Auth lives in Supabase.
 
-Data lives in Postgres (Supabase).
+Authentication lives in Supabase.
 
-Web app only talks to Supabase.
+Data lives in Supabase Postgres.
 
-Row-Level Security (RLS) protects rows (owners see only their stuff; admins see all; coaches see assigned clients).
+The web app only communicates through Supabase APIs.
+
+Row-Level Security (RLS) ensures users see only their own data.
 
 Non-functional notes
-Security: RLS on every table before launch.
 
-CI: GitHub Actions runs build + tests on every PR.
+Security: turn on RLS before launch.
 
-Observability: console logs + simple error states for now.
+CI: GitHub Actions runs build + tests on each PR.
+
+Logging: use console output for early debugging.
 
 Links
+
 Discovery: docs/discovery-brief.md

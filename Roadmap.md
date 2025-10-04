@@ -7,6 +7,11 @@ This roadmap outlines the major engineering stages required to deliver the Trium
 - Capture technical requirements around industry intelligence, Hormozi model alignment, and orchestration outcomes.
 - Define domain models, platform boundaries, and initial Supabase schema to ground the codebase structure.
 - Stand up repositories, environments, and CI/CD pipelines to support iterative implementation.
+- Produce a concise discovery brief that records stakeholder goals, current-state workflows, and prioritized pains to anchor the remaining phases.
+- Create an initial systems architecture diagram highlighting services, data flows, and integrations to validate platform boundaries.
+- Draft the Supabase schema migration files, seed data templates, and access policies required for early development environments.
+- Bootstrap repo scaffolding (linting, formatting, testing templates) and configure automated CI checks to enforce contribution quality.
+- Document engineering workflows, branching strategy, and release cadence inside a CONTRIBUTING guide to align collaborators.
 
 ## Phase 1 – Core Platform Enablement
 **Focus**: Deliver the authenticated client and coach experiences along with the foundational BRM level services.

@@ -2,6 +2,19 @@ Got it. Below is the final, complete GitHub-ready README.md for your Triumph BRM
 
 ⸻
 
+Getting Started with Next.js
+
+To work on the web client locally, install dependencies and run the development server:
+
+    npm install
+    npm run dev
+
+The app uses the Next.js App Router located in the `app/` directory. Update pages and components there to evolve the experience.
+
+⸻
+
+
+
 Triumph BRM Companion App
 
 Business Revenue Model Companion for Triumph Business Solutions

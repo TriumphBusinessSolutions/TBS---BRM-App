@@ -1,19 +1,20 @@
 # Architecture (Phase 0)
 
 ## Components
-- Web App: Next.js (Vercel)
-- Backend: Supabase (Auth, Postgres, Storage, Edge Functions)
-- Optional: External APIs later
+- Web App: Next.js hosted on Vercel  
+- Backend: Supabase (Auth, Database, Storage, Edge Functions)  
+- Optional: External APIs later  
 
 ## Diagram (components)
 ```mermaid
 graph LR
-    A[Next.js App (Vercel)] --- B[(Supabase Postgres)]
+    A[Next.js App on Vercel] --- B[Supabase Database]
     A --- C[Supabase Auth]
     A --- D[Supabase Storage]
-    A --- E[Edge Functions (optional)]
+    A --- E[Edge Functions]
 
-Login → Load Data → Save Flow
+## Login → Load Data → Save Flow
+
 sequenceDiagram
     participant U as User
     participant W as Next.js App
@@ -22,10 +23,11 @@ sequenceDiagram
     U->>W: open app + login
     W->>S: verify session (Auth)
     W->>S: select client's models
-    S-->>W: rows (models, milestones, kpis)
+    S-->>W: send data
     U->>W: edit a value
     W->>S: update row
-    S-->>W: success
+    S-->>W: confirm success
+
 
 Boundaries (simple rules)
 Auth lives in Supabase.

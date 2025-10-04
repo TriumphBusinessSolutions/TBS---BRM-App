@@ -3,7 +3,7 @@ import ModelPanel, {
   type MilestoneRow,
   type ModelRow,
 } from "./components/ModelPanel";
-import { supabase } from "../../lib/supabase";
+import { getSupabaseClient } from "../../lib/supabase";
 
 type ClientRow = {
   id: string;
@@ -20,7 +20,51 @@ function groupByModel<T extends { model_id: string }>(rows: T[]) {
   return map;
 }
 
+function renderErrors(errors: string[]) {
+  if (errors.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+      <p className="font-semibold">There was a problem loading client data.</p>
+      <ul className="mt-2 list-disc space-y-1 pl-5">
+        {errors.map((message, index) => (
+          <li key={index}>{message}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+const header = (
+  <header className="space-y-2">
+    <h1 className="text-2xl font-bold tracking-tight">Client — My BRM View</h1>
+    <p className="text-sm text-slate-600">
+      Overview of your BRM progress, milestones, and KPIs.
+    </p>
+  </header>
+);
+
 export default async function ClientDashboardPage() {
+  const supabase = getSupabaseClient();
+
+  if (!supabase) {
+    const errors = [
+      "Supabase client is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+    ];
+
+    return (
+      <main className="mx-auto max-w-4xl space-y-6 px-6 py-8">
+        {header}
+        {renderErrors(errors)}
+        <p className="text-sm text-slate-500">
+          Unable to load client data because Supabase environment variables are missing.
+        </p>
+      </main>
+    );
+  }
+
   const {
     data: client,
     error: clientError,
@@ -39,24 +83,8 @@ export default async function ClientDashboardPage() {
   if (!client) {
     return (
       <main className="mx-auto max-w-4xl space-y-6 px-6 py-8">
-        <header className="space-y-2">
-          <h1 className="text-2xl font-bold tracking-tight">Client — My BRM View</h1>
-          <p className="text-sm text-slate-600">
-            Overview of your BRM progress, milestones, and KPIs.
-          </p>
-        </header>
-
-        {errors.length > 0 ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            <p className="font-semibold">There was a problem loading client data.</p>
-            <ul className="mt-2 list-disc space-y-1 pl-5">
-              {errors.map((message, index) => (
-                <li key={index}>{message}</li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-
+        {header}
+        {renderErrors(errors)}
         <p className="text-sm text-slate-500">No client found.</p>
       </main>
     );
@@ -100,23 +128,8 @@ export default async function ClientDashboardPage() {
 
   return (
     <main className="mx-auto max-w-4xl space-y-6 px-6 py-8">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight">Client — My BRM View</h1>
-        <p className="text-sm text-slate-600">
-          Overview of your BRM progress, milestones, and KPIs.
-        </p>
-      </header>
-
-      {errors.length > 0 ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          <p className="font-semibold">There was a problem loading client data.</p>
-          <ul className="mt-2 list-disc space-y-1 pl-5">
-            {errors.map((message, index) => (
-              <li key={index}>{message}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+      {header}
+      {renderErrors(errors)}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold text-slate-900">Client: {client.name}</h2>

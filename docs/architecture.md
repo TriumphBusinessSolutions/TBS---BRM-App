@@ -9,27 +9,36 @@ Optional: External APIs later
 
 ## Diagram (components)
 
+```mermaid
 graph LR
-    A[Next.js App on Vercel] --- B[Supabase Database]
-    A --- C[Supabase Auth]
-    A --- D[Supabase Storage]
-    A --- E[Edge Functions]
-
+  A[Vercel] --> B[Supabase Postgres]
+  A --> C{{Supabase Auth}}
+  A --> D{{Supabase Storage}}
+  A --> E{{Edge Functions}}
+  B --- C
+  B --- D
+  B --- E
+```
 
 ## Login → Load Data → Save Flow
 
+```mermaid
 sequenceDiagram
     participant U as User
-    participant W as Next.js App
+    participant W as Web App (Next.js)
     participant S as Supabase
 
-    U->>W: open app + login
-    W->>S: verify session (Auth)
-    W->>S: select client's models
-    S-->>W: send data
-    U->>W: edit a value
-    W->>S: update row
-    S-->>W: confirm success
+    U->>W: Opens app and logs in
+    W->>S: Sends credentials for verification
+    S-->>W: Returns session token
+    W->>S: Requests user/client data
+    S-->>W: Returns models + milestones
+    U->>W: Makes an edit or update
+    W->>S: Saves change
+    S-->>W: Confirms success
+```
+
+---
 
 Boundaries (simple rules)
 

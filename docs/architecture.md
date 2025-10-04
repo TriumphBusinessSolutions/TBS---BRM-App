@@ -8,25 +8,25 @@
 ## Diagram (components)
 ```mermaid
 graph LR
-  A[Next.js App (Vercel)] <---> B[(Supabase Postgres)]
-  A <-- Auth --> C[Supabase Auth]
-  A <-- Storage --> D[Supabase Storage]
-  A <---> E[Edge Functions (optional)]
-Login → Load Data → Save Flow
-mermaid
-Copy code
-sequenceDiagram
-  participant U as User
-  participant W as Next.js App
-  participant S as Supabase
+    A[Next.js App (Vercel)] --- B[(Supabase Postgres)]
+    A --- C[Supabase Auth]
+    A --- D[Supabase Storage]
+    A --- E[Edge Functions (optional)]
 
-  U->>W: open app + login
-  W->>S: verify session (Auth)
-  W->>S: select client's models
-  S-->>W: rows (models, milestones, kpis)
-  U->>W: edit a value
-  W->>S: update row
-  S-->>W: success
+Login → Load Data → Save Flow
+sequenceDiagram
+    participant U as User
+    participant W as Next.js App
+    participant S as Supabase
+
+    U->>W: open app + login
+    W->>S: verify session (Auth)
+    W->>S: select client's models
+    S-->>W: rows (models, milestones, kpis)
+    U->>W: edit a value
+    W->>S: update row
+    S-->>W: success
+
 Boundaries (simple rules)
 Auth lives in Supabase.
 

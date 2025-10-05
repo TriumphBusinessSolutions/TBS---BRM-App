@@ -1,17 +1,14 @@
+import Image from "next/image";
 import type { Metadata } from "next";
+
 import LoginForm from "./LoginForm";
 
-export const metadata: Metadata = {
-  title: "Sign in | TBS BRM App",
-};
+const heroImageSrc =
+  "https://drive.google.com/uc?export=view&id=1QBmt10l53-TTZIrYMz2DWE5d6ZzgpGhy";
 
-const googleProviders = process.env.NEXT_PUBLIC_SUPABASE_OAUTH_PROVIDERS;
-const isGoogleEnabled = googleProviders
-  ? googleProviders
-      .split(",")
-      .map((provider) => provider.trim().toLowerCase())
-      .includes("google")
-  : true;
+export const metadata: Metadata = {
+  title: "Sign in | Business Revenue Model App",
+};
 
 const supabaseConfigured = Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -19,59 +16,98 @@ const supabaseConfigured = Boolean(
 
 export default function LoginPage() {
   return (
-    <div
-      className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#004aad] px-4 py-12 text-[#0f1626]"
-    >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(250,145,0,0.18),_transparent_45%),radial-gradient(circle_at_bottom,_rgba(0,74,173,0.65),_rgba(2,18,53,0.95))]" />
-      <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.08),rgba(0,0,0,0.05))] mix-blend-overlay" />
+    <div className="relative min-h-screen overflow-hidden bg-[#030712] text-slate-900">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(12,36,91,0.85)_0%,_rgba(3,7,18,0.95)_60%,_rgba(3,7,18,1)_100%)]" />
+        <div className="absolute inset-0 bg-[conic-gradient(from_120deg,_rgba(255,192,86,0.25)_0deg,_rgba(74,154,255,0.18)_120deg,_rgba(132,92,255,0.22)_240deg,_rgba(255,192,86,0.25)_360deg)] mix-blend-screen" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_18%,rgba(255,150,64,0.45),transparent_45%),radial-gradient(circle_at_82%_76%,rgba(65,199,255,0.3),transparent_55%)] blur-[110px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle,_rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[length:28px_28px] opacity-20" />
+        <div className="absolute inset-x-0 bottom-[-30%] h-[60%] bg-[radial-gradient(circle,_rgba(16,50,126,0.4)_0%,_rgba(3,7,18,0)_70%)]" />
+      </div>
 
-      <div className="relative z-10 flex w-full max-w-5xl flex-col items-center gap-10">
-        <div className="relative w-full max-w-xl">
-          <div className="absolute -inset-1 rounded-[32px] bg-[conic-gradient(from_180deg_at_50%_50%,rgba(250,145,0,0.6),rgba(0,74,173,0.8),rgba(250,145,0,0.6))] opacity-80 blur-2xl" />
+      <main className="relative z-10 flex min-h-screen items-center justify-center px-4 py-16 sm:px-6 lg:px-12">
+        <div className="relative w-full max-w-4xl">
+          <div
+            className="absolute inset-x-8 -top-24 h-40 rounded-[120px] bg-gradient-to-r from-[#ffb347]/40 via-[#5ca8ff]/35 to-[#9c6bff]/40 blur-[120px]"
+            aria-hidden="true"
+          />
+          <div
+            className="absolute inset-x-16 -bottom-28 h-48 rounded-[140px] bg-gradient-to-r from-[#61d1ff]/30 via-[#ff7e47]/35 to-[#6f6bff]/35 blur-[140px]"
+            aria-hidden="true"
+          />
 
-          <div className="relative rounded-[32px] bg-white/95 p-10 shadow-[0_45px_90px_-30px_rgba(6,24,44,0.65)] ring-1 ring-white/40 backdrop-blur">
-            <div className="mb-8 flex items-start gap-4">
-              <span className="inline-flex h-16 w-16 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-[#fa9100] via-[#ffbb58] to-[#004aad] shadow-[0_18px_35px_rgba(250,145,0,0.45)]">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 64 64"
-                  className="h-11 w-11 text-white"
-                  role="img"
-                  aria-hidden="true"
-                >
-                  <path
-                    fill="currentColor"
-                    d="M32 6c-11.598 0-21 9.402-21 21 0 6.265 2.755 12.085 7.57 16.031-.694 5.31-2.867 8.988-4.766 11.061a2 2 0 0 0 1.335 3.388c6.978.35 12.71-2.692 16.483-5.301 3.773 2.61 9.505 5.651 16.482 5.3a2 2 0 0 0 1.336-3.386c-1.901-2.075-4.077-5.759-4.77-11.079C50.244 39.085 53 33.265 53 27c0-11.598-9.402-21-21-21Zm0 6c8.271 0 15 6.729 15 15 0 4.672-2.133 8.94-5.852 11.802a2 2 0 0 0-.765 1.863c.536 3.983 1.682 7.153 2.968 9.689-4.307-.756-7.91-2.95-10.35-4.761a2 2 0 0 0-2.002-.139A22.86 22.86 0 0 1 24.7 50.35c1.286-2.536 2.432-5.707 2.968-9.69a2 2 0 0 0-.763-1.862C19.187 35.939 17 31.672 17 27c0-8.271 6.729-15 15-15Zm0 8c-3.86 0-7 3.14-7 7 0 2.94 1.87 5.48 4.513 6.52a2 2 0 0 0 1.073 3.817h2.829a2 2 0 0 0 1.074-3.817C37.129 32.48 39 29.94 39 27c0-3.86-3.14-7-7-7Z"
-                  />
-                </svg>
-              </span>
+          <div className="relative mx-auto flex w-full max-w-[960px] justify-center">
+            <div className="group relative w-full">
+              <div className="absolute inset-0 -translate-y-3 scale-[0.98] rounded-[34px] bg-gradient-to-br from-white/15 via-white/5 to-white/15 opacity-70 blur-2xl transition duration-700 group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-90" />
+              <div className="relative overflow-hidden rounded-[36px] border border-white/10 bg-white/10 shadow-[0_45px_120px_rgba(2,10,40,0.65)] backdrop-blur-2xl">
+                <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.12)_0%,rgba(255,255,255,0)_50%)]" aria-hidden="true" />
 
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#fa9100]">
-                  Triumph Business Solutions
-                </p>
-                <h1 className="mt-2 text-3xl font-semibold text-[#0f1626]">
-                  Welcome back to the BRM App
-                </h1>
-                <p className="mt-2 max-w-md text-sm text-[#415170]">
-                  Securely access your Business Revenue Models workspace and pick up where you left off.
-                </p>
+                <div className="relative grid gap-12 px-8 pb-12 pt-16 sm:px-12">
+                  <div className="relative mx-auto flex w-full max-w-xl flex-col items-center text-center text-white">
+                    <span className="mb-6 inline-flex items-center justify-center rounded-2xl bg-white/15 p-3 shadow-[0_18px_60px_rgba(3,12,45,0.55)] backdrop-blur">
+                      <Image
+                        src="/triumph-logo.svg"
+                        alt="Triumph Business Solutions logo"
+                        width={64}
+                        height={64}
+                        priority
+                      />
+                    </span>
+                    <p className="text-xs font-semibold uppercase tracking-[0.55em] text-[#ffd48f]">
+                      Triumph Business Solutions
+                    </p>
+                    <h1 className="mt-3 text-3xl font-semibold leading-tight sm:text-[2.4rem]">
+                      Business Revenue Model App
+                    </h1>
+                    <p className="mt-4 max-w-lg text-sm text-white/80 sm:text-base">
+                      Dive into a colourful control room tailored for visionaries and mentors to co-create profitable journeys.
+                    </p>
+                  </div>
+
+                  <div className="relative mx-auto w-full max-w-3xl overflow-hidden rounded-[28px] border border-white/10 bg-white/95 p-6 shadow-[0_30px_120px_rgba(10,24,64,0.35)] transition duration-500 ease-out sm:p-10">
+                    <div className="pointer-events-none absolute inset-0 rounded-[28px] bg-[radial-gradient(circle_at_top,_rgba(255,183,77,0.16),transparent_70%)]" aria-hidden="true" />
+                    <div className="pointer-events-none absolute inset-0 rounded-[28px] bg-[linear-gradient(160deg,rgba(96,143,255,0.12)_0%,rgba(255,255,255,0)_55%)]" aria-hidden="true" />
+                    <div className="absolute -top-24 right-12 hidden h-52 w-52 rounded-full bg-[radial-gradient(circle,_rgba(109,204,255,0.45),transparent_65%)] blur-3xl sm:block" aria-hidden="true" />
+                    <div className="absolute -bottom-28 left-10 hidden h-56 w-56 rounded-full bg-[radial-gradient(circle,_rgba(255,132,80,0.32),transparent_68%)] blur-3xl sm:block" aria-hidden="true" />
+                    <div className="relative">
+                      <div className="mb-10 flex flex-col items-center justify-center gap-6 sm:flex-row sm:items-end sm:justify-between">
+                        <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
+                          <div className="relative h-20 w-20 overflow-hidden rounded-3xl border border-white/50 bg-gradient-to-br from-[#1d2c6b] via-[#2b1d64] to-[#41126d] shadow-[0_16px_40px_rgba(15,31,82,0.45)]">
+                            <Image
+                              src={heroImageSrc}
+                              alt="Triumph Business Solutions safari illustration"
+                              fill
+                              sizes="80px"
+                              className="object-cover"
+                              priority
+                              unoptimized
+                            />
+                          </div>
+                          <div>
+                            <h2 className="text-lg font-semibold text-[#122550] sm:text-xl">
+                              Welcome to the Triumph portal
+                            </h2>
+                            <p className="mt-1 text-sm text-[#4a5579]">
+                              Choose your path below to sign in or request fresh access.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="hidden sm:block">
+                          <div className="rounded-full border border-[#e3e8ff] bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.4em] text-[#33406c] shadow-[0_14px_36px_rgba(35,62,140,0.18)]">
+                            Secure mentor approvals
+                          </div>
+                        </div>
+                      </div>
+
+                      <LoginForm supabaseConfigured={supabaseConfigured} />
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-
-            <div className="rounded-2xl border border-[#004aad]/10 bg-white/90 p-2 shadow-inner">
-              <LoginForm
-                googleAvailable={isGoogleEnabled}
-                supabaseConfigured={supabaseConfigured}
-              />
             </div>
           </div>
         </div>
-
-        <p className="text-sm font-medium tracking-wide text-white/80">
-          Powered by Triumph Business Solutions
-        </p>
-      </div>
+      </main>
     </div>
   );
 }

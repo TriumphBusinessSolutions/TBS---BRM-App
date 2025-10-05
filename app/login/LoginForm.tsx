@@ -152,18 +152,18 @@ export default function LoginForm({
   const disableGoogle = disableForm || isGoogleLoading || !googleAvailable;
 
   return (
-    <div className="w-full max-w-md">
-      <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+    <div className="w-full">
+      <div className="rounded-2xl bg-white/95 p-8 shadow-[0_18px_35px_rgba(15,22,38,0.12)] ring-1 ring-[#004aad]/10">
         <form onSubmit={handleSubmit} className="space-y-6" aria-busy={disableForm}>
           <div className="space-y-2 text-center">
-            <h1 className="text-2xl font-semibold text-slate-900">Sign in to TBS BRM</h1>
-            <p className="text-sm text-slate-500">
-              We&#39;ll send a magic link to your inbox.
+            <h2 className="text-2xl font-semibold text-[#004aad]">Sign in to TBS BRM</h2>
+            <p className="text-sm text-[#415170]">
+              We&#39;ll send a secure magic link to your inbox.
             </p>
           </div>
 
           <div className="space-y-2 text-left">
-            <label className="block text-sm font-medium text-slate-700" htmlFor="email">
+            <label className="block text-sm font-medium text-[#0f1626]" htmlFor="email">
               Email address
             </label>
             <input
@@ -175,34 +175,34 @@ export default function LoginForm({
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               disabled={disableForm}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:cursor-not-allowed disabled:bg-slate-100"
+              className="w-full rounded-xl border border-[#004aad]/20 bg-white px-3 py-2.5 text-sm text-[#0f1626] shadow-sm transition focus:border-[#fa9100] focus:outline-none focus:ring-2 focus:ring-[#fa9100]/40 disabled:cursor-not-allowed disabled:bg-[#e7ecf7]"
             />
           </div>
 
           <button
             type="submit"
-            className="inline-flex w-full items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-indigo-300"
+            className="inline-flex w-full items-center justify-center rounded-xl bg-[#004aad] px-4 py-2.5 text-sm font-semibold uppercase tracking-wide text-white shadow-[0_12px_20px_rgba(0,74,173,0.35)] transition hover:bg-[#003b8d] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fa9100] focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:bg-[#6d8bc5]"
             disabled={disableForm}
           >
             {isSubmitting ? "Sending…" : "Send magic link"}
           </button>
         </form>
 
-        <div className="mt-6 flex items-center gap-4 text-sm text-slate-500">
-          <span className="h-px flex-1 bg-slate-200" aria-hidden="true" />
+        <div className="mt-6 flex items-center gap-4 text-sm text-[#566483]">
+          <span className="h-px flex-1 bg-[#d7def2]" aria-hidden="true" />
           <span>or continue with</span>
-          <span className="h-px flex-1 bg-slate-200" aria-hidden="true" />
+          <span className="h-px flex-1 bg-[#d7def2]" aria-hidden="true" />
         </div>
 
         <button
           type="button"
           onClick={handleGoogleSignIn}
           disabled={disableGoogle}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-white"
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#004aad]/15 bg-white px-4 py-2.5 text-sm font-semibold text-[#0f1626] shadow-sm transition hover:border-[#fa9100]/40 hover:bg-[#fef7ef] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fa9100] focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:border-[#d4dcf4] disabled:text-[#9aa6c2] disabled:hover:bg-white"
         >
           {isGoogleLoading ? (
             <svg
-              className="h-4 w-4 animate-spin text-indigo-600"
+              className="h-4 w-4 animate-spin text-[#fa9100]"
               viewBox="0 0 24 24"
               aria-hidden="true"
             >
@@ -223,7 +223,7 @@ export default function LoginForm({
             </svg>
           ) : (
             <svg
-              className="h-4 w-4 text-slate-500"
+              className="h-4 w-4 text-[#004aad]"
               viewBox="0 0 533.5 544.3"
               aria-hidden="true"
             >

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "../../../lib/supabase";
+import { getSupabaseBrowserClient } from "../../../lib/supabase";
 
 type Props = {
   kpiId: string;
@@ -27,6 +27,13 @@ export default function KpiInlineEditor({
   }, [value]);
 
   const handleSave = async () => {
+    const supabase = getSupabaseBrowserClient();
+
+    if (!supabase) {
+      onNotify("error", "Supabase is not configured.");
+      return;
+    }
+
     const trimmed = inputValue.trim();
     const parsedValue = trimmed === "" ? null : Number(trimmed);
 
@@ -45,7 +52,10 @@ export default function KpiInlineEditor({
     try {
       const { error: updateError } = await supabase
         .from("kpis")
-        .update({ value: parsedValue })
+        .update(
+          // The generated Supabase types are placeholders at the moment, so cast to satisfy TS.
+          { value: parsedValue } as never,
+        )
         .eq("id", kpiId);
 
       if (updateError) {

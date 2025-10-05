@@ -1,5 +1,5 @@
 import ClientGrid, { ClientWithRelations } from "./components/ClientCard";
-import { supabase } from "../../lib/supabase";
+import { getServerClient } from "../../lib/supabase-server";
 
 type ClientRow = {
   id: string;
@@ -34,6 +34,8 @@ type KpiRow = {
 export const dynamic = "force-dynamic";
 
 async function fetchClientsData() {
+  const supabase = getServerClient();
+
   const [clientsRes, modelsRes, milestonesRes, kpisRes] = await Promise.all([
     supabase.from("clients").select("id, name"),
     supabase.from("models").select("id, client_id, level, status, created_at"),

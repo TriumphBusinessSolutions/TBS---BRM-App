@@ -148,8 +148,14 @@ function formatBusinessInfoEntries(
   });
 
   entries.sort((a, b) => {
-    const orderA = BUSINESS_INFO_FIELD_ORDER_MAP.get(a[0]) ?? Number.MAX_SAFE_INTEGER;
-    const orderB = BUSINESS_INFO_FIELD_ORDER_MAP.get(b[0]) ?? Number.MAX_SAFE_INTEGER;
+    const orderA =
+      BUSINESS_INFO_FIELD_ORDER_MAP.get(
+        a[0] as (typeof BUSINESS_INFO_FIELD_ORDER)[number]
+      ) ?? Number.MAX_SAFE_INTEGER;
+    const orderB =
+      BUSINESS_INFO_FIELD_ORDER_MAP.get(
+        b[0] as (typeof BUSINESS_INFO_FIELD_ORDER)[number]
+      ) ?? Number.MAX_SAFE_INTEGER;
 
     if (orderA !== orderB) {
       return orderA - orderB;

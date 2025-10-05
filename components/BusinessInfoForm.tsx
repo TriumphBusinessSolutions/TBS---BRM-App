@@ -124,12 +124,16 @@ const submissionSchema = z
 
 const brmLevelLabels: Record<Database["public"]["Enums"]["brm_level"], string> = {
   level_1: "Level 1",
+  level_2: "Level 2",
+  level_3: "Level 3",
   level_2_3: "Level 2-3",
   level_4: "Level 4",
 };
 
 const brmLevelDescriptions: Record<Database["public"]["Enums"]["brm_level"], string> = {
   level_1: "Building your momentum",
+  level_2: "Expanding your growth levers",
+  level_3: "Strengthening retention systems",
   level_2_3: "Scaling systems & team",
   level_4: "Operating at peak performance",
 };

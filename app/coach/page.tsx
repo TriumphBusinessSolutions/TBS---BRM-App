@@ -36,6 +36,10 @@ export const dynamic = "force-dynamic";
 async function fetchClientsData() {
   const supabase = getServerClient();
 
+  if (!supabase) {
+    return [];
+  }
+
   const [clientsRes, modelsRes, milestonesRes, kpisRes] = await Promise.all([
     supabase.from("clients").select("id, name"),
     supabase.from("models").select("id, client_id, level, status, created_at"),

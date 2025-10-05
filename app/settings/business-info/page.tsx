@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import BusinessInfoForm from "../../../components/BusinessInfoForm";
 import { getServerClient } from "../../../lib/supabase-server";
 import type { Database } from "../../../types/supabase";
-import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const metadata: Metadata = {
   title: "Business Info | TBS BRM App",
@@ -12,7 +11,11 @@ export const metadata: Metadata = {
 const BRM_LEVEL_FALLBACK: Database["public"]["Enums"]["brm_level"] = "level_1";
 
 export default async function BusinessInfoSettingsPage() {
-  const supabase = getServerClient() as SupabaseClient<Database>;
+  const supabase = getServerClient();
+
+  if (!supabase) {
+    redirect("/login");
+  }
 
   const {
     data: { user },

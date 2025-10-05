@@ -15,11 +15,6 @@ type ClientBusinessProfile = {
   key_details: string | null;
 };
 
-type ClientBusinessProfileInsert = ClientBusinessProfile & {
-  user_id: string;
-  updated_at: string;
-};
-
 type StatusMessage = {
   type: "success" | "error";
   message: string;
@@ -189,7 +184,7 @@ export default function BusinessProfileForm() {
 
     const { error } = await supabase
       .from("client_business_profiles")
-      .upsert<ClientBusinessProfileInsert>(
+      .upsert(
         {
           user_id: userId,
           business_name: profile.business_name?.trim() || null,

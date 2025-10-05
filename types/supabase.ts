@@ -70,47 +70,125 @@ export type Database = {
             foreignKeyName: "models_client_id_fkey";
             columns: ["client_id"];
             referencedRelation: "clients";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      milestones: {
+        Row: {
+          id: string;
+          model_id: string;
+          title: string;
+          done: boolean;
+          created_at: Nullable<Timestamp>;
+          updated_at: Nullable<Timestamp>;
+        };
+        Insert: {
+          id?: string;
+          model_id: string;
+          title: string;
+          done?: boolean;
+          created_at?: Nullable<Timestamp>;
+          updated_at?: Nullable<Timestamp>;
+        };
+        Update: {
+          id?: string;
+          model_id?: string;
+          title?: string;
+          done?: boolean;
+          created_at?: Nullable<Timestamp>;
+          updated_at?: Nullable<Timestamp>;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "milestones_model_id_fkey";
+            columns: ["model_id"];
+            referencedRelation: "models";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      kpis: {
+        Row: {
+          id: string;
+          model_id: string;
+          key: string;
+          target: Nullable<number>;
+          value: Nullable<number>;
+          period: Nullable<string>;
+          created_at: Nullable<Timestamp>;
+          updated_at: Nullable<Timestamp>;
+        };
+        Insert: {
+          id?: string;
+          model_id: string;
+          key: string;
+          target?: Nullable<number>;
+          value?: Nullable<number>;
+          period?: Nullable<string>;
+          created_at?: Nullable<Timestamp>;
+          updated_at?: Nullable<Timestamp>;
+        };
+        Update: {
+          id?: string;
+          model_id?: string;
+          key?: string;
+          target?: Nullable<number>;
+          value?: Nullable<number>;
+          period?: Nullable<string>;
+          created_at?: Nullable<Timestamp>;
+          updated_at?: Nullable<Timestamp>;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "kpis_model_id_fkey";
+            columns: ["model_id"];
+            referencedRelation: "models";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       business_context: {
         Row: {
-          avg_txn_value: number | null;
+          avg_txn_value: Nullable<number>;
           brm_level: Database["public"]["Enums"]["brm_level"];
           core_promise: string;
-          created_at: string | null;
+          created_at: Nullable<Timestamp>;
           has_upsells: boolean;
-          notes: string | null;
+          notes: Nullable<string>;
           offer_type: Database["public"]["Enums"]["offer_type"];
-          retention_model: Database["public"]["Enums"]["retention_model"] | null;
+          retention_model: Nullable<Database["public"]["Enums"]["retention_model"]>;
           revenue_band: Database["public"]["Enums"]["revenue_band"];
-          traffic_source: Database["public"]["Enums"]["traffic_source"] | null;
-          updated_at: string | null;
+          traffic_source: Nullable<Database["public"]["Enums"]["traffic_source"]>;
+          updated_at: Nullable<Timestamp>;
           user_id: string;
         };
         Insert: {
-          avg_txn_value?: number | null;
+          avg_txn_value?: Nullable<number>;
           brm_level: Database["public"]["Enums"]["brm_level"];
           core_promise: string;
-          created_at?: string | null;
+          created_at?: Nullable<Timestamp>;
           has_upsells?: boolean;
-          notes?: string | null;
+          notes?: Nullable<string>;
           offer_type: Database["public"]["Enums"]["offer_type"];
-          retention_model?: Database["public"]["Enums"]["retention_model"] | null;
+          retention_model?: Nullable<Database["public"]["Enums"]["retention_model"]>;
           revenue_band: Database["public"]["Enums"]["revenue_band"];
-          traffic_source?: Database["public"]["Enums"]["traffic_source"] | null;
-          updated_at?: string | null;
+          traffic_source?: Nullable<Database["public"]["Enums"]["traffic_source"]>;
+          updated_at?: Nullable<Timestamp>;
           user_id: string;
         };
         Update: {
-          avg_txn_value?: number | null;
+          avg_txn_value?: Nullable<number>;
           brm_level?: Database["public"]["Enums"]["brm_level"];
           core_promise?: string;
-          created_at?: string | null;
+          created_at?: Nullable<Timestamp>;
           has_upsells?: boolean;
-          notes?: string | null;
+          notes?: Nullable<string>;
           offer_type?: Database["public"]["Enums"]["offer_type"];
-          retention_model?: Database["public"]["Enums"]["retention_model"] | null;
+          retention_model?: Nullable<Database["public"]["Enums"]["retention_model"]>;
           revenue_band?: Database["public"]["Enums"]["revenue_band"];
-          traffic_source?: Database["public"]["Enums"]["traffic_source"] | null;
-          updated_at?: string | null;
+          traffic_source?: Nullable<Database["public"]["Enums"]["traffic_source"]>;
+          updated_at?: Nullable<Timestamp>;
           user_id?: string;
         };
         Relationships: [
@@ -122,42 +200,82 @@ export type Database = {
           },
         ];
       };
+      offer_stack: {
+        Row: {
+          created_at: Nullable<Timestamp>;
+          fulfillment_type: Nullable<Database["public"]["Enums"]["fulfillment_type"]>;
+          name: string;
+          price_point: Nullable<number>;
+          primary_outcome: Nullable<string>;
+          slot: 1 | 2 | 3;
+          updated_at: Nullable<Timestamp>;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: Nullable<Timestamp>;
+          fulfillment_type?: Nullable<Database["public"]["Enums"]["fulfillment_type"]>;
+          name: string;
+          price_point?: Nullable<number>;
+          primary_outcome?: Nullable<string>;
+          slot: 1 | 2 | 3;
+          updated_at?: Nullable<Timestamp>;
+          user_id: string;
+        };
+        Update: {
+          created_at?: Nullable<Timestamp>;
+          fulfillment_type?: Nullable<Database["public"]["Enums"]["fulfillment_type"]>;
+          name?: string;
+          price_point?: Nullable<number>;
+          primary_outcome?: Nullable<string>;
+          slot?: 1 | 2 | 3;
+          updated_at?: Nullable<Timestamp>;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "offer_stack_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       client_business_profiles: {
         Row: {
           user_id: string;
-          business_name: string | null;
-          industry: string | null;
-          business_type: string | null;
-          top_service_one: string | null;
-          top_service_two: string | null;
-          top_service_three: string | null;
-          key_details: string | null;
-          created_at: string | null;
-          updated_at: string | null;
+          business_name: Nullable<string>;
+          industry: Nullable<string>;
+          business_type: Nullable<string>;
+          top_service_one: Nullable<string>;
+          top_service_two: Nullable<string>;
+          top_service_three: Nullable<string>;
+          key_details: Nullable<string>;
+          created_at: Nullable<Timestamp>;
+          updated_at: Nullable<Timestamp>;
         };
         Insert: {
           user_id: string;
-          business_name?: string | null;
-          industry?: string | null;
-          business_type?: string | null;
-          top_service_one?: string | null;
-          top_service_two?: string | null;
-          top_service_three?: string | null;
-          key_details?: string | null;
-          created_at?: string | null;
-          updated_at?: string | null;
+          business_name?: Nullable<string>;
+          industry?: Nullable<string>;
+          business_type?: Nullable<string>;
+          top_service_one?: Nullable<string>;
+          top_service_two?: Nullable<string>;
+          top_service_three?: Nullable<string>;
+          key_details?: Nullable<string>;
+          created_at?: Nullable<Timestamp>;
+          updated_at?: Nullable<Timestamp>;
         };
         Update: {
           user_id?: string;
-          business_name?: string | null;
-          industry?: string | null;
-          business_type?: string | null;
-          top_service_one?: string | null;
-          top_service_two?: string | null;
-          top_service_three?: string | null;
-          key_details?: string | null;
-          created_at?: string | null;
-          updated_at?: string | null;
+          business_name?: Nullable<string>;
+          industry?: Nullable<string>;
+          business_type?: Nullable<string>;
+          top_service_one?: Nullable<string>;
+          top_service_two?: Nullable<string>;
+          top_service_three?: Nullable<string>;
+          key_details?: Nullable<string>;
+          created_at?: Nullable<Timestamp>;
+          updated_at?: Nullable<Timestamp>;
         };
         Relationships: [
           {
@@ -188,7 +306,6 @@ export type Database = {
           team_size: Nullable<string>;
           growth_goal: Nullable<string>;
           notes: Nullable<string>;
-          [key: string]: string | number | boolean | null | undefined;
         };
         Insert: {
           id?: string;
@@ -209,7 +326,6 @@ export type Database = {
           team_size?: Nullable<string>;
           growth_goal?: Nullable<string>;
           notes?: Nullable<string>;
-          [key: string]: string | number | boolean | null | undefined;
         };
         Update: {
           id?: string;
@@ -230,49 +346,12 @@ export type Database = {
           team_size?: Nullable<string>;
           growth_goal?: Nullable<string>;
           notes?: Nullable<string>;
-          [key: string]: string | number | boolean | null | undefined;
         };
         Relationships: [
           {
             foreignKeyName: "client_business_information_client_id_fkey";
             columns: ["client_id"];
             referencedRelation: "clients";
-      offer_stack: {
-        Row: {
-          created_at: string | null;
-          fulfillment_type: Database["public"]["Enums"]["fulfillment_type"] | null;
-          name: string;
-          price_point: number | null;
-          primary_outcome: string | null;
-          slot: 1 | 2 | 3;
-          updated_at: string | null;
-          user_id: string;
-        };
-        Insert: {
-          created_at?: string | null;
-          fulfillment_type?: Database["public"]["Enums"]["fulfillment_type"] | null;
-          name: string;
-          price_point?: number | null;
-          primary_outcome?: string | null;
-          slot: 1 | 2 | 3;
-          updated_at?: string | null;
-          user_id: string;
-        };
-        Update: {
-          created_at?: string | null;
-          fulfillment_type?: Database["public"]["Enums"]["fulfillment_type"] | null;
-          name?: string;
-          price_point?: number | null;
-          primary_outcome?: string | null;
-          slot?: 1 | 2 | 3;
-          updated_at?: string | null;
-          user_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "offer_stack_user_id_fkey";
-            columns: ["user_id"];
-            referencedRelation: "users";
             referencedColumns: ["id"];
           },
         ];
@@ -288,7 +367,7 @@ export type Database = {
       };
     };
     Enums: {
-      brm_level: "level_1" | "level_2_3" | "level_4";
+      brm_level: "level_1" | "level_2" | "level_2_3" | "level_3" | "level_4";
       fulfillment_type: "one_to_one" | "group" | "self_serve" | "hybrid";
       offer_type:
         | "service"
@@ -298,12 +377,7 @@ export type Database = {
         | "ecommerce"
         | "local_bm"
         | "info_product";
-      retention_model:
-        | "one_off"
-        | "package"
-        | "subscription"
-        | "retainer"
-        | "none";
+      retention_model: "one_off" | "package" | "subscription" | "retainer" | "none";
       revenue_band:
         | "pre_revenue"
         | "lt_250k"

@@ -18,9 +18,10 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "zod": [
+        "./lib/zod"
       ]
-      "zod": ["./lib/zod"],
-      "zod/*": ["./lib/zod"]
     },
     "resolveJsonModule": true,
     "isolatedModules": true,

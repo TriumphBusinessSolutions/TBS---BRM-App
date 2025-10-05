@@ -9,8 +9,7 @@ import {
   type FormEvent,
 } from "react";
 import { useRouter } from "next/navigation";
-import type { SupabaseClient } from "@supabase/supabase-js";
-
+import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient } from "../../lib/supabase";
 import type { Database } from "../../types/supabase";
 
@@ -42,6 +41,22 @@ const initialSignupState: SignUpFormState = {
 };
 
 export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
+const resolveDashboardPath = (session: Session | null) => {
+  const appMetaRole =
+    (session?.user?.app_metadata as { role?: string } | undefined)?.role ??
+    (session?.user?.user_metadata as { role?: string } | undefined)?.role;
+
+  if (appMetaRole === "coach") {
+    return "/coach";
+  }
+
+  return "/client";
+};
+
+export default function LoginForm({
+  googleAvailable,
+  supabaseConfigured,
+}: LoginFormProps) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("login");
   const [status, setStatus] = useState<StatusMessage | null>(null);
@@ -75,7 +90,7 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
 
       if (data.session) {
         setIsRedirecting(true);
-        router.replace("/coach");
+        router.replace(resolveDashboardPath(data.session));
       }
     });
 
@@ -87,7 +102,7 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
       }
 
       setIsRedirecting(true);
-      router.replace("/coach");
+      router.replace(resolveDashboardPath(session));
     });
 
     return () => {
@@ -191,8 +206,13 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
     setIsSubmitting(true);
     setStatus(null);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log("Mock signup payload", trimmedValues);
+    const origin = window.location.origin;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${origin}/client`,
+      },
+    });
 
     setIsSubmitting(false);
     setSignupForm(initialSignupState);

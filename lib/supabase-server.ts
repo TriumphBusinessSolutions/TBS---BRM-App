@@ -1,23 +1,31 @@
 // lib/supabase-server.ts
 import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 
+/**
+ * Lightweight server-side Supabase client that reuses the access token stored
+ * in Supabase's auth cookies. We only need read/write access on behalf of the
+ * signed-in user, so persisting or mutating cookies isn't necessary here.
+ */
 export function getServerClient() {
   const cookieStore = cookies();
-  return createServerClient(
+  const accessToken = cookieStore.get("sb-access-token")?.value;
+
+  return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options: any) {
-          cookieStore.set({ name, value, ...options });
-        },
-        remove(name: string, options: any) {
-          cookieStore.set({ name, value: "", ...options });
-        },
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+      global: {
+        headers: accessToken
+          ? {
+              Authorization: `Bearer ${accessToken}`,
+            }
+          : {},
       },
     }
   );

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Rubik } from "next/font/google";
 import LoginForm from "./LoginForm";
 
 export const metadata: Metadata = {
@@ -18,16 +17,10 @@ const supabaseConfigured = Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 );
 
-const rubik = Rubik({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
-
 export default function LoginPage() {
   return (
     <div
-      className={`${rubik.className} relative flex min-h-screen items-center justify-center overflow-hidden bg-[#004aad] px-4 py-12 text-[#0f1626]`}
+      className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#004aad] px-4 py-12 text-[#0f1626]"
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(250,145,0,0.18),_transparent_45%),radial-gradient(circle_at_bottom,_rgba(0,74,173,0.65),_rgba(2,18,53,0.95))]" />
       <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.08),rgba(0,0,0,0.05))] mix-blend-overlay" />

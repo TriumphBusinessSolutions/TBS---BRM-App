@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient } from "../../lib/supabase";
 import type { Database } from "../../types/supabase";
 
@@ -14,6 +14,18 @@ type LoginFormProps = {
 type StatusMessage = {
   type: "success" | "error";
   message: string;
+};
+
+const resolveDashboardPath = (session: Session | null) => {
+  const appMetaRole =
+    (session?.user?.app_metadata as { role?: string } | undefined)?.role ??
+    (session?.user?.user_metadata as { role?: string } | undefined)?.role;
+
+  if (appMetaRole === "coach") {
+    return "/coach";
+  }
+
+  return "/client";
 };
 
 export default function LoginForm({
@@ -48,7 +60,7 @@ export default function LoginForm({
       }
       if (data.session) {
         setIsRedirecting(true);
-        router.replace("/coach");
+        router.replace(resolveDashboardPath(data.session));
       }
     });
 
@@ -60,7 +72,7 @@ export default function LoginForm({
       }
 
       setIsRedirecting(true);
-      router.replace("/coach");
+      router.replace(resolveDashboardPath(session));
     });
 
     return () => {
@@ -125,7 +137,7 @@ export default function LoginForm({
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${origin}/coach`,
+        redirectTo: `${origin}/client`,
       },
     });
 

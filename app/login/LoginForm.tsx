@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import { useRouter } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -11,12 +18,14 @@ type LoginFormProps = {
   supabaseConfigured: boolean;
 };
 
+type Mode = "login" | "signup";
+
 type StatusMessage = {
   type: "success" | "error";
   message: string;
 };
 
-type AccountRequestFormState = {
+type SignUpFormState = {
   firstName: string;
   lastName: string;
   businessName: string;
@@ -24,7 +33,7 @@ type AccountRequestFormState = {
   phone: string;
 };
 
-const initialAccountRequestState: AccountRequestFormState = {
+const initialSignupState: SignUpFormState = {
   firstName: "",
   lastName: "",
   businessName: "",
@@ -32,23 +41,17 @@ const initialAccountRequestState: AccountRequestFormState = {
   phone: "",
 };
 
-const fieldWrapperClass =
-  "group relative overflow-hidden rounded-2xl border border-[#dbe4ff] bg-white/80 shadow-[0_18px_40px_-24px_rgba(38,66,145,0.45)] transition duration-300 focus-within:border-transparent focus-within:shadow-[0_24px_72px_-26px_rgba(52,88,189,0.55)]";
-const fieldHighlightClass =
-  "pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-[#5b8dff]/12 via-transparent to-[#ffb778]/18 opacity-0 transition duration-300 group-focus-within:opacity-100";
-const inputClass =
-  "relative z-10 w-full rounded-2xl border-0 bg-transparent px-5 py-[15px] text-[15px] font-medium text-[#10204b] placeholder:text-[#7a8cb6] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60";
-
 export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
   const router = useRouter();
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<Mode>("login");
   const [status, setStatus] = useState<StatusMessage | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const redirectTimeout = useRef<number | null>(null);
 
-  const [identifier, setIdentifier] = useState("");
-  const [password, setPassword] = useState("");
-  const [accountForm, setAccountForm] = useState(initialAccountRequestState);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [signupForm, setSignupForm] = useState<SignUpFormState>(initialSignupState);
 
   const supabase = useMemo<SupabaseClient<Database> | null>(() => {
     if (!supabaseConfigured) {
@@ -69,6 +72,7 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
       if (!isMounted) {
         return;
       }
+
       if (data.session) {
         setIsRedirecting(true);
         router.replace("/coach");
@@ -96,38 +100,53 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
     setStatus(null);
   }, [mode]);
 
+  useEffect(() => {
+    return () => {
+      if (redirectTimeout.current) {
+        window.clearTimeout(redirectTimeout.current);
+      }
+    };
+  }, []);
+
+  const scheduleRedirect = (path: string, delay = 400) => {
+    if (redirectTimeout.current) {
+      window.clearTimeout(redirectTimeout.current);
+    }
+
+    redirectTimeout.current = window.setTimeout(() => {
+      setIsRedirecting(true);
+      router.push(path);
+    }, delay);
+  };
+
   const handleLoginSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!supabase) {
+    const trimmedEmail = loginEmail.trim();
+    const trimmedPassword = loginPassword.trim();
+
+    if (!trimmedEmail || !trimmedPassword) {
       setStatus({
         type: "error",
-        message: "Authentication is not configured yet. Please try again later.",
+        message: "Please provide both your email address and password to continue.",
       });
-      return;
-    }
-
-    const trimmedIdentifier = identifier.trim();
-    const trimmedPassword = password.trim();
-
-    if (!trimmedIdentifier) {
-      setStatus({
-        type: "error",
-        message: "Enter your username or business email.",
-      });
-      return;
-    }
-
-    if (!trimmedPassword) {
-      setStatus({ type: "error", message: "Enter your password." });
       return;
     }
 
     setIsSubmitting(true);
     setStatus(null);
 
+    if (!supabase) {
+      console.log("Mock login payload", { email: trimmedEmail });
+      await new Promise((resolve) => setTimeout(resolve, 700));
+      setIsSubmitting(false);
+      setStatus({ type: "success", message: "Signed in! Preparing your dashboard…" });
+      scheduleRedirect("/dashboard", 500);
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithPassword({
-      email: trimmedIdentifier,
+      email: trimmedEmail,
       password: trimmedPassword,
     });
 
@@ -140,31 +159,31 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
 
     setStatus({
       type: "success",
-      message: "Signed in successfully. Redirecting you to your dashboard…",
+      message: "Signed in successfully. Redirecting you now…",
     });
   };
 
-  const handleAccountFormChange = (field: keyof AccountRequestFormState) =>
+  const handleSignupChange = (field: keyof SignUpFormState) =>
     (event: ChangeEvent<HTMLInputElement>) => {
       const value = event.target.value;
-      setAccountForm((previous) => ({ ...previous, [field]: value }));
+      setSignupForm((previous) => ({ ...previous, [field]: value }));
     };
 
-  const handleAccountRequestSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSignupSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const trimmedValues = {
-      firstName: accountForm.firstName.trim(),
-      lastName: accountForm.lastName.trim(),
-      businessName: accountForm.businessName.trim(),
-      email: accountForm.email.trim(),
-      phone: accountForm.phone.trim(),
+      firstName: signupForm.firstName.trim(),
+      lastName: signupForm.lastName.trim(),
+      businessName: signupForm.businessName.trim(),
+      email: signupForm.email.trim(),
+      phone: signupForm.phone.trim(),
     } as const;
 
     if (Object.values(trimmedValues).some((value) => !value)) {
       setStatus({
         type: "error",
-        message: "Please complete every field so your mentor has the details they need.",
+        message: "Complete every field so your mentor can confirm your access.",
       });
       return;
     }
@@ -172,286 +191,241 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
     setIsSubmitting(true);
     setStatus(null);
 
-    await new Promise((resolve) => setTimeout(resolve, 1200));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    console.log("Mock signup payload", trimmedValues);
 
     setIsSubmitting(false);
-    setAccountForm(initialAccountRequestState);
-    setStatus({
-      type: "success",
-      message:
-        "Thank you! Your mentor has been notified. You'll receive an email as soon as your access is approved.",
-    });
+    setSignupForm(initialSignupState);
+    setStatus({ type: "success", message: "Account created! Redirecting you to the dashboard." });
+
+    scheduleRedirect("/dashboard");
   };
 
-  const disableLogin = isSubmitting || isRedirecting;
-  const disableAccountRequest = isSubmitting;
-  const toggleDisabled = isSubmitting || isRedirecting;
-  const isLogin = mode === "login";
-
-  const handleModeChange = (nextMode: "login" | "signup") => {
-    if (toggleDisabled || mode === nextMode) {
+  const switchTo = (nextMode: Mode) => {
+    if (mode === nextMode || isSubmitting) {
       return;
     }
 
     setMode(nextMode);
   };
 
-  const toggleButtonClass = (active: boolean) =>
-    `relative flex-1 overflow-hidden rounded-2xl px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.35em] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3147ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
-      active
-        ? "bg-gradient-to-r from-[#2f5aff] via-[#5f7bff] to-[#ff9653] text-white shadow-[0_14px_34px_rgba(46,82,200,0.45)]"
-        : "text-[#5e6f9a] hover:text-[#162d70]"
-    }`;
+  const renderStatusIcon = () => {
+    if (!status) {
+      return null;
+    }
 
-  const submitButtonBase =
-    "inline-flex w-full items-center justify-center rounded-2xl px-5 py-[15px] text-[12px] font-semibold uppercase tracking-[0.42em] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2a55ff] focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-60";
+    if (status.type === "success") {
+      return (
+        <svg viewBox="0 0 20 20" aria-hidden="true">
+          <path
+            d="M7.8 13.4 4.7 10.3a1 1 0 0 1 1.4-1.4l2 2 5-5a1 1 0 0 1 1.4 1.4l-5.7 5.7a1 1 0 0 1-1.4 0Z"
+            fill="currentColor"
+          />
+        </svg>
+      );
+    }
+
+    return (
+      <svg viewBox="0 0 20 20" aria-hidden="true">
+        <path d="M9 5h2l-.5 7h-1Z" fill="currentColor" />
+        <circle cx="10" cy="14" r="1" fill="currentColor" />
+      </svg>
+    );
+  };
 
   return (
-    <section aria-labelledby="login-panel" className="space-y-8">
-      <div className="rounded-[28px] bg-white/70 p-1 shadow-[0_18px_46px_rgba(35,58,132,0.25)]">
-        <div className="flex gap-2 rounded-[24px] bg-white/90 p-1">
-          <button
-            type="button"
-            onClick={() => handleModeChange("login")}
-            className={toggleButtonClass(isLogin)}
-            aria-pressed={isLogin}
-            disabled={toggleDisabled}
-          >
-            Sign in
-          </button>
-          <button
-            type="button"
-            onClick={() => handleModeChange("signup")}
-            className={toggleButtonClass(!isLogin)}
-            aria-pressed={!isLogin}
-            disabled={toggleDisabled}
-          >
-            Request access
-          </button>
-        </div>
-      </div>
+    <section className="form-shell" aria-live="polite">
+      <header>
+        <h2>{mode === "login" ? "Welcome Back" : "Create Your Account"}</h2>
+        <p>
+          {mode === "login"
+            ? "Access the Business Revenue Model command center and sync with your mentor in moments."
+            : "Share a few details so your Triumph mentor can unlock the platform for you."}
+        </p>
+      </header>
 
-      {isLogin ? (
-        <form className="space-y-6" onSubmit={handleLoginSubmit} aria-busy={disableLogin}>
-          <div className="space-y-2 text-center">
-            <h2 id="login-panel" className="text-2xl font-semibold text-[#0b1f3f]">
-              Welcome back, Triumph leader
-            </h2>
-            <p className="text-sm text-[#4f5f82]">
-              Slide into your command center and sync with your mentor in moments.
-            </p>
-          </div>
-
-          <div className="space-y-3 text-left">
-            <label className="block text-sm font-semibold text-[#10254a]" htmlFor="identifier">
-              Username or business email
-            </label>
-            <div className={fieldWrapperClass}>
-              <div className={fieldHighlightClass} />
+      <div className="form-panels">
+        <form
+          className={`form-panel ${mode === "login" ? "is-active" : ""}`}
+          onSubmit={handleLoginSubmit}
+          aria-hidden={mode !== "login"}
+        >
+          <div className="field">
+            <label htmlFor="login-email">Email</label>
+            <div className="input-shell">
               <input
-                id="identifier"
-                name="identifier"
-                type="text"
-                autoComplete="username"
+                id="login-email"
+                name="email"
+                type="email"
+                autoComplete="email"
                 placeholder="you@triumph.com"
-                value={identifier}
-                onChange={(event) => setIdentifier(event.target.value)}
-                disabled={disableLogin}
-                className={inputClass}
+                value={loginEmail}
+                onChange={(event) => setLoginEmail(event.target.value)}
+                disabled={isSubmitting || isRedirecting}
+                required
               />
             </div>
           </div>
 
-          <div className="space-y-3 text-left">
-            <label className="block text-sm font-semibold text-[#10254a]" htmlFor="password">
-              Password
-            </label>
-            <div className={fieldWrapperClass}>
-              <div className={fieldHighlightClass} />
+          <div className="field">
+            <label htmlFor="login-password">Password</label>
+            <div className="input-shell">
               <input
-                id="password"
+                id="login-password"
                 name="password"
                 type="password"
                 autoComplete="current-password"
                 placeholder="Enter your password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                disabled={disableLogin}
-                className={inputClass}
+                value={loginPassword}
+                onChange={(event) => setLoginPassword(event.target.value)}
+                disabled={isSubmitting || isRedirecting}
+                required
               />
             </div>
           </div>
 
           <button
             type="submit"
-            className={`${submitButtonBase} bg-gradient-to-r from-[#2f5aff] via-[#496dff] to-[#ff7c3a] text-white shadow-[0_26px_56px_-24px_rgba(31,72,180,0.65)] hover:from-[#234fea] hover:via-[#3a60f0] hover:to-[#ff6f1f]`}
-            disabled={disableLogin || !identifier || !password}
+            className="primary-button"
+            disabled={isSubmitting || isRedirecting}
           >
-            {isSubmitting ? "Signing in…" : "Enter the studio"}
+            {isSubmitting ? "Signing In" : "Sign In"}
           </button>
+
+          <p className="form-link">
+            Don’t have an account?
+            <button type="button" onClick={() => switchTo("signup")}>Sign Up</button>
+          </p>
         </form>
-      ) : (
-        <form className="space-y-5" onSubmit={handleAccountRequestSubmit} aria-busy={disableAccountRequest}>
-          <div className="space-y-2 text-center">
-            <h2 id="login-panel" className="text-2xl font-semibold text-[#0b1f3f]">
-              Request your Triumph access
-            </h2>
-            <p className="text-sm text-[#4f5f82]">
-              Share the essentials so your mentor can unlock the Business Revenue Model App for you.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-3">
-              <label className="block text-sm font-semibold text-[#10254a]" htmlFor="firstName">
-                First name
-              </label>
-              <div className={fieldWrapperClass}>
-                <div className={fieldHighlightClass} />
-                <input
-                  id="firstName"
-                  name="firstName"
-                  type="text"
-                  autoComplete="given-name"
-                  placeholder="Jordan"
-                  value={accountForm.firstName}
-                  onChange={handleAccountFormChange("firstName")}
-                  disabled={disableAccountRequest}
-                  className={inputClass}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <label className="block text-sm font-semibold text-[#10254a]" htmlFor="lastName">
-                Last name
-              </label>
-              <div className={fieldWrapperClass}>
-                <div className={fieldHighlightClass} />
-                <input
-                  id="lastName"
-                  name="lastName"
-                  type="text"
-                  autoComplete="family-name"
-                  placeholder="Rivera"
-                  value={accountForm.lastName}
-                  onChange={handleAccountFormChange("lastName")}
-                  disabled={disableAccountRequest}
-                  className={inputClass}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <label className="block text-sm font-semibold text-[#10254a]" htmlFor="businessName">
-              Business name
-            </label>
-            <div className={fieldWrapperClass}>
-              <div className={fieldHighlightClass} />
+        <form
+          className={`form-panel ${mode === "signup" ? "is-active" : ""}`}
+          onSubmit={handleSignupSubmit}
+          aria-hidden={mode !== "signup"}
+        >
+          <div className="field">
+            <label htmlFor="signup-firstName">First Name</label>
+            <div className="input-shell">
               <input
-                id="businessName"
+                id="signup-firstName"
+                name="firstName"
+                type="text"
+                autoComplete="given-name"
+                placeholder="Jordan"
+                value={signupForm.firstName}
+                onChange={handleSignupChange("firstName")}
+                disabled={isSubmitting || isRedirecting}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label htmlFor="signup-lastName">Last Name</label>
+            <div className="input-shell">
+              <input
+                id="signup-lastName"
+                name="lastName"
+                type="text"
+                autoComplete="family-name"
+                placeholder="Rivera"
+                value={signupForm.lastName}
+                onChange={handleSignupChange("lastName")}
+                disabled={isSubmitting || isRedirecting}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label htmlFor="signup-businessName">Business Name</label>
+            <div className="input-shell">
+              <input
+                id="signup-businessName"
                 name="businessName"
                 type="text"
                 autoComplete="organization"
                 placeholder="Triumph Studios"
-                value={accountForm.businessName}
-                onChange={handleAccountFormChange("businessName")}
-                disabled={disableAccountRequest}
-                className={inputClass}
+                value={signupForm.businessName}
+                onChange={handleSignupChange("businessName")}
+                disabled={isSubmitting || isRedirecting}
+                required
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-3">
-              <label className="block text-sm font-semibold text-[#10254a]" htmlFor="requestEmail">
-                Work email
-              </label>
-              <div className={fieldWrapperClass}>
-                <div className={fieldHighlightClass} />
-                <input
-                  id="requestEmail"
-                  name="requestEmail"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="hello@business.com"
-                  value={accountForm.email}
-                  onChange={handleAccountFormChange("email")}
-                  disabled={disableAccountRequest}
-                  className={inputClass}
-                />
-              </div>
+          <div className="field">
+            <label htmlFor="signup-email">Email</label>
+            <div className="input-shell">
+              <input
+                id="signup-email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="hello@business.com"
+                value={signupForm.email}
+                onChange={handleSignupChange("email")}
+                disabled={isSubmitting || isRedirecting}
+                required
+              />
             </div>
+          </div>
 
-            <div className="space-y-3">
-              <label className="block text-sm font-semibold text-[#10254a]" htmlFor="phone">
-                Phone number
-              </label>
-              <div className={fieldWrapperClass}>
-                <div className={fieldHighlightClass} />
-                <input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  autoComplete="tel"
-                  placeholder="(555) 123-4567"
-                  value={accountForm.phone}
-                  onChange={handleAccountFormChange("phone")}
-                  disabled={disableAccountRequest}
-                  className={inputClass}
-                />
-              </div>
+          <div className="field">
+            <label htmlFor="signup-phone">Phone Number</label>
+            <div className="input-shell">
+              <input
+                id="signup-phone"
+                name="phone"
+                type="tel"
+                autoComplete="tel"
+                placeholder="(555) 123-4567"
+                value={signupForm.phone}
+                onChange={handleSignupChange("phone")}
+                disabled={isSubmitting || isRedirecting}
+                required
+              />
             </div>
           </div>
 
           <button
             type="submit"
-            className={`${submitButtonBase} bg-gradient-to-r from-[#ff8a3a] via-[#ffa45a] to-[#ffd07a] text-[#311600] shadow-[0_26px_54px_-24px_rgba(250,145,0,0.55)] hover:from-[#ff7a1f] hover:via-[#ff9741] hover:to-[#ffcb66]`}
-            disabled={disableAccountRequest}
+            className="primary-button"
+            disabled={isSubmitting || isRedirecting}
           >
-            {isSubmitting ? "Submitting…" : "Notify my mentor"}
+            {isSubmitting ? "Submitting" : "Register"}
           </button>
+
+          <p className="form-link">
+            Already have an account?
+            <button type="button" onClick={() => switchTo("login")}>Sign In</button>
+          </p>
         </form>
-      )}
+      </div>
 
       {status && (
-        <div
-          className={`relative overflow-hidden rounded-2xl border px-5 py-4 text-sm shadow-[0_18px_40px_-28px_rgba(15,40,95,0.45)] transition ${
-            status.type === "success"
-              ? "border-emerald-200/70 bg-emerald-50/95 text-emerald-800"
-              : "border-rose-200/70 bg-rose-50/95 text-rose-700"
-          }`}
-          role={status.type === "error" ? "alert" : "status"}
-          aria-live="polite"
-        >
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/80 via-transparent to-white/60 opacity-80" aria-hidden="true" />
-          <div className="relative flex items-start gap-3">
-            <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/70 text-xs font-semibold">
-              {status.type === "success" ? "✓" : "!"}
-            </span>
-            <span>{status.message}</span>
-          </div>
+        <div className={`status-banner ${status.type}`} role={status.type === "error" ? "alert" : "status"}>
+          {renderStatusIcon()}
+          <span>{status.message}</span>
         </div>
       )}
 
       {!supabaseConfigured && (
-        <p className="rounded-2xl border border-amber-200 bg-amber-50/95 px-4 py-3 text-center text-xs text-amber-800" role="note">
-          Supabase credentials are not configured. Sign-in will be available once the environment is ready.
+        <p className="supabase-warning">
+          Authentication isn’t wired up yet. Replace the mock handlers with your API calls once Supabase credentials are in place.
         </p>
       )}
 
       {isRedirecting && (
-        <div
-          className="flex items-center justify-center gap-2 rounded-full bg-[#e7edff] px-4 py-2 text-sm text-[#2c3f6d]"
-          role="status"
-          aria-live="polite"
-        >
-          <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" aria-hidden="true">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+        <div className="redirecting-chip" role="status">
+          <svg viewBox="0 0 24 24" aria-hidden="true" className="spin-icon">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.4" />
+            <path
+              d="M12 2a10 10 0 0 1 9.54 7.09l-2.38.7A7.5 7.5 0 0 0 12 4.5V2Z"
+              fill="currentColor"
+            />
           </svg>
-          Redirecting to your dashboard…
+          Redirecting…
         </div>
       )}
     </section>

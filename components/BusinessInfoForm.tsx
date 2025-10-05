@@ -107,7 +107,6 @@ const submissionSchema = z
   .superRefine((data, ctx) => {
     if (!data.offers[0] || data.offers[0].name === null) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
         path: ["offers", 0, "name"],
         message: "Your primary offer (slot 1) is required",
       });
@@ -116,7 +115,6 @@ const submissionSchema = z
     data.offers.forEach((offer, index) => {
       if (offer.name === null && (offer.price_point !== null || offer.fulfillment_type !== null || offer.primary_outcome !== null)) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
           path: ["offers", index, "name"],
           message: "Add a name to describe this offer",
         });
@@ -198,10 +196,10 @@ export default function BusinessInfoForm({ brmLevel, initialContext, initialOffe
   const [revenueBand, setRevenueBand] = useState<BusinessContextRow["revenue_band"] | "">(
     initialContext?.revenue_band ?? "",
   );
-  const [trafficSource, setTrafficSource] = useState<BusinessContextRow["traffic_source"] | "">(
+  const [trafficSource, setTrafficSource] = useState<Exclude<BusinessContextRow["traffic_source"], null> | "">(
     initialContext?.traffic_source ?? "",
   );
-  const [retentionModel, setRetentionModel] = useState<BusinessContextRow["retention_model"] | "">(
+  const [retentionModel, setRetentionModel] = useState<Exclude<BusinessContextRow["retention_model"], null> | "">(
     initialContext?.retention_model ?? "",
   );
   const [hasUpsells, setHasUpsells] = useState<boolean>(Boolean(initialContext?.has_upsells));
@@ -477,7 +475,7 @@ export default function BusinessInfoForm({ brmLevel, initialContext, initialOffe
                       "w-full rounded-xl border border-indigo-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/60",
                       fieldErrors["traffic_source"] && "border-rose-400 focus:border-rose-400 focus:ring-rose-200",
                     )}
-                    value={trafficSource}
+                    value={trafficSource ?? ""}
                     onChange={(event) => setTrafficSource(event.target.value as typeof trafficSource)}
                   >
                     <option value="">Select a source</option>
@@ -647,7 +645,7 @@ export default function BusinessInfoForm({ brmLevel, initialContext, initialOffe
                   "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/60",
                   fieldErrors["retention_model"] && "border-rose-400 focus:border-rose-400 focus:ring-rose-200",
                 )}
-                value={retentionModel}
+                value={retentionModel ?? ""}
                 onChange={(event) => setRetentionModel(event.target.value as typeof retentionModel)}
               >
                 <option value="">Select retention style</option>

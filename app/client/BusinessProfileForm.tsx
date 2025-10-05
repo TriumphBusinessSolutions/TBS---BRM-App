@@ -15,6 +15,11 @@ type ClientBusinessProfile = {
   key_details: string | null;
 };
 
+type ClientBusinessProfileInsert = ClientBusinessProfile & {
+  user_id: string;
+  updated_at: string;
+};
+
 type StatusMessage = {
   type: "success" | "error";
   message: string;
@@ -85,11 +90,13 @@ export default function BusinessProfileForm() {
       };
     }
 
-    async function loadProfile() {
+    const client = supabase;
+
+    async function loadProfile(currentClient: SupabaseClient<Database>) {
       setIsLoading(true);
       setStatus(null);
 
-      const { data: authData, error: authError } = await supabase.auth.getUser();
+      const { data: authData, error: authError } = await currentClient.auth.getUser();
       if (!isMounted) {
         return;
       }
@@ -108,13 +115,13 @@ export default function BusinessProfileForm() {
       const currentUserId = authData.user.id;
       setUserId(currentUserId);
 
-      const { data, error } = await supabase
+      const { data, error } = await currentClient
         .from("client_business_profiles")
         .select(
           "business_name, industry, business_type, top_service_one, top_service_two, top_service_three, key_details",
         )
         .eq("user_id", currentUserId)
-        .maybeSingle();
+        .maybeSingle<ClientBusinessProfile>();
 
       if (!isMounted) {
         return;
@@ -143,7 +150,7 @@ export default function BusinessProfileForm() {
       setIsLoading(false);
     }
 
-    void loadProfile();
+    void loadProfile(client);
 
     return () => {
       isMounted = false;
@@ -182,7 +189,7 @@ export default function BusinessProfileForm() {
 
     const { error } = await supabase
       .from("client_business_profiles")
-      .upsert(
+      .upsert<ClientBusinessProfileInsert>(
         {
           user_id: userId,
           business_name: profile.business_name?.trim() || null,

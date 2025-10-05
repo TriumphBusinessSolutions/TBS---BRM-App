@@ -61,6 +61,52 @@ export type Database = {
           },
         ];
       };
+      client_business_profiles: {
+        Row: {
+          user_id: string;
+          business_name: string | null;
+          industry: string | null;
+          business_type: string | null;
+          top_service_one: string | null;
+          top_service_two: string | null;
+          top_service_three: string | null;
+          key_details: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          user_id: string;
+          business_name?: string | null;
+          industry?: string | null;
+          business_type?: string | null;
+          top_service_one?: string | null;
+          top_service_two?: string | null;
+          top_service_three?: string | null;
+          key_details?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          user_id?: string;
+          business_name?: string | null;
+          industry?: string | null;
+          business_type?: string | null;
+          top_service_one?: string | null;
+          top_service_two?: string | null;
+          top_service_three?: string | null;
+          key_details?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "client_business_profiles_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       offer_stack: {
         Row: {
           created_at: string | null;

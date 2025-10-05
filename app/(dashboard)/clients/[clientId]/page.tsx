@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
-import PromptGenerator from "./PromptGenerator";
+import PromptGenerator, { PromptContextItem } from "./PromptGenerator";
 import { getServerClient } from "@/lib/supabase-server";
 import type { PostgrestError } from "@supabase/supabase-js";
+import type { Database } from "@/types/supabase";
 
 const LEVELS = [
   {
@@ -52,16 +53,51 @@ const LEVELS = [
 
 type LevelKey = (typeof LEVELS)[number]["key"];
 
-type ClientRecord = {
-  id: string;
-  name: string;
+const BUSINESS_INFO_FIELD_ORDER = [
+  "business_name",
+  "ideal_client_profile",
+  "primary_offer",
+  "primary_offer_promise",
+  "primary_offer_price",
+  "primary_marketing_channel",
+  "average_client_value",
+  "average_monthly_revenue",
+  "monthly_revenue_goal",
+  "sales_process",
+  "fulfillment_bottleneck",
+  "team_size",
+  "growth_goal",
+  "notes",
+] as const;
+
+const BUSINESS_INFO_LABELS: Record<string, string> = {
+  business_name: "Business name",
+  ideal_client_profile: "Ideal client",
+  primary_offer: "Primary offer",
+  primary_offer_promise: "Offer promise",
+  primary_offer_price: "Offer price",
+  primary_marketing_channel: "Primary marketing channel",
+  average_client_value: "Average client value",
+  average_monthly_revenue: "Average monthly revenue",
+  monthly_revenue_goal: "Monthly revenue goal",
+  sales_process: "Sales process",
+  fulfillment_bottleneck: "Fulfillment bottleneck",
+  team_size: "Team size",
+  growth_goal: "Growth goal",
+  notes: "Notes",
 };
 
-type ModelRecord = {
-  id: string;
-  level: string | null;
-  status: string | null;
-};
+const BUSINESS_INFO_FIELD_ORDER_MAP = new Map(
+  BUSINESS_INFO_FIELD_ORDER.map((field, index) => [field, index])
+);
+
+const BUSINESS_INFO_IGNORED_KEYS = new Set(["id", "client_id", "created_at", "updated_at"]);
+
+type ClientRecord = Database["public"]["Tables"]["clients"]["Row"];
+
+type ModelRecord = Database["public"]["Tables"]["models"]["Row"];
+
+type BusinessInformationRecord = Database["public"]["Tables"]["client_business_information"]["Row"];
 
 function normalizeLevel(level: string | null): LevelKey | null {
   if (!level) {
@@ -83,28 +119,152 @@ type PageProps = {
   params: { clientId: string };
 };
 
+function startCase(value: string): string {
+  return value
+    .split(/[_-]+/)
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
+}
+
+function formatBusinessInfoEntries(
+  info: BusinessInformationRecord | null
+): PromptContextItem[] {
+  if (!info) {
+    return [];
+  }
+
+  const entries = Object.entries(info).filter(([key, rawValue]) => {
+    if (BUSINESS_INFO_IGNORED_KEYS.has(key)) {
+      return false;
+    }
+
+    if (rawValue === null || typeof rawValue === "undefined") {
+      return false;
+    }
+
+    const value = String(rawValue).trim();
+    return value.length > 0;
+  });
+
+  entries.sort((a, b) => {
+    const orderA = BUSINESS_INFO_FIELD_ORDER_MAP.get(a[0]) ?? Number.MAX_SAFE_INTEGER;
+    const orderB = BUSINESS_INFO_FIELD_ORDER_MAP.get(b[0]) ?? Number.MAX_SAFE_INTEGER;
+
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+
+    return a[0].localeCompare(b[0]);
+  });
+
+  return entries.map(([key, rawValue]) => ({
+    label: BUSINESS_INFO_LABELS[key] ?? startCase(key),
+    value: String(rawValue).trim(),
+  }));
+}
+
+function buildPromptContextSummary(items: PromptContextItem[]): string {
+  if (items.length === 0) {
+    return "";
+  }
+
+  return items
+    .map((item) => `${item.label}: ${item.value}`)
+    .join(" | ");
+}
+
 export default async function ClientDashboardPage({ params }: PageProps) {
   const supabase = getServerClient();
   const { clientId } = params;
 
-  const [clientResult, modelsResult] = await Promise.all([
-    supabase
-      .from("clients")
-      .select("id,name")
-      .eq("id", clientId)
-      .maybeSingle<ClientRecord>(),
-    supabase
-      .from("models")
-      .select("id,level,status")
-      .eq("client_id", clientId)
-      .order("created_at", { ascending: true }),
-  ]);
-
-  const client = clientResult.data as ClientRecord | null;
-  const clientError = clientResult.error as PostgrestError | null;
-
   const isDev = process.env.NODE_ENV !== "production";
-  const usingMockData = !client && isDev;
+  const usingMockData = !supabase && isDev;
+
+  if (!supabase && !usingMockData) {
+    throw new Error(
+      "Supabase credentials are required to load client dashboard data."
+    );
+  }
+
+  let client: ClientRecord | null = null;
+  let clientError: PostgrestError | null = null;
+  let models: ModelRecord[] = [];
+  let modelsError: PostgrestError | null = null;
+  let businessInfo: BusinessInformationRecord | null = null;
+  let businessInfoError: PostgrestError | null = null;
+
+  if (supabase) {
+    const [clientResult, modelsResult, businessInfoResult] = await Promise.all([
+      supabase
+        .from("clients")
+        .select("id,name,email,phone,created_at,updated_at")
+        .eq("id", clientId)
+        .maybeSingle<ClientRecord>(),
+      supabase
+        .from("models")
+        .select("id,client_id,level,status,created_at,updated_at")
+        .eq("client_id", clientId)
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("client_business_information")
+        .select("*")
+        .eq("client_id", clientId)
+        .maybeSingle<BusinessInformationRecord>(),
+    ]);
+
+    client = (clientResult.data as ClientRecord | null) ?? null;
+    clientError = (clientResult.error as PostgrestError | null) ?? null;
+
+    models = (modelsResult.data as ModelRecord[] | null) ?? [];
+    modelsError = (modelsResult.error as PostgrestError | null) ?? null;
+
+    businessInfo =
+      (businessInfoResult.data as BusinessInformationRecord | null) ?? null;
+    businessInfoError =
+      (businessInfoResult.error as PostgrestError | null) ?? null;
+  } else if (usingMockData) {
+    client = {
+      id: clientId,
+      name: "Sample Client",
+      email: null,
+      phone: null,
+      created_at: null,
+      updated_at: null,
+    };
+
+    models = [
+      {
+        id: "mock-model-1",
+        client_id: clientId,
+        level: "level_1",
+        status: "active",
+        created_at: null,
+        updated_at: null,
+      },
+    ];
+
+    businessInfo = {
+      id: "mock-business-info",
+      client_id: clientId,
+      created_at: null,
+      updated_at: null,
+      business_name: "Sample Ventures",
+      ideal_client_profile: "Service-based founders scaling to $1M ARR",
+      primary_offer: "12-week accelerator focused on funnel optimization",
+      primary_offer_promise: "Launch a validated attraction funnel in 90 days",
+      primary_offer_price: "$7,500",
+      primary_marketing_channel: "Organic social + paid webinars",
+      average_client_value: "$9,800",
+      average_monthly_revenue: "$45,000",
+      monthly_revenue_goal: "$75,000",
+      sales_process: "Strategy session call followed by proposal",
+      fulfillment_bottleneck: "Limited sales team capacity",
+      team_size: "5",
+      growth_goal: "Unlock consistent attraction and upsell pathways",
+      notes: "Focus on improving lead-to-call conversion rate.",
+    };
+  }
 
   if (!client && !usingMockData) {
     if (clientError?.code === "PGRST116" || clientError?.message?.includes("No rows")) {
@@ -113,24 +273,24 @@ export default async function ClientDashboardPage({ params }: PageProps) {
     throw clientError ?? new Error("Unable to load client record");
   }
 
-  const models = (modelsResult.data as ModelRecord[] | null) ?? [];
-  const modelsError = usingMockData ? null : ((modelsResult.error as PostgrestError | null) ?? null);
+  const clientName = client?.name ?? "Client";
 
-  let clientName: string;
   const unlockedLevels = new Set<LevelKey>();
+  (models ?? []).forEach((model) => {
+    const normalized = normalizeLevel(model.level ?? null);
+    if (normalized) {
+      unlockedLevels.add(normalized);
+    }
+  });
 
-  if (usingMockData) {
-    clientName = "Sample Client";
+  if (usingMockData && unlockedLevels.size === 0) {
     unlockedLevels.add("level_1");
-  } else {
-    clientName = client!.name;
-    models.forEach((model) => {
-      const normalized = normalizeLevel(model.level);
-      if (normalized) {
-        unlockedLevels.add(normalized);
-      }
-    });
   }
+
+  const businessContextItems = formatBusinessInfoEntries(businessInfo);
+  const generatorContextItems = businessContextItems.slice(0, 6);
+  const businessContextSummary = buildPromptContextSummary(businessContextItems);
+  const missingBusinessInfo = businessContextItems.length === 0;
 
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-8 p-6">
@@ -146,6 +306,38 @@ export default async function ClientDashboardPage({ params }: PageProps) {
           </p>
         ) : null}
       </header>
+
+      {businessInfoError ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          We couldn’t load the business information for this client. Prompts will use general guidance until the data is available.
+        </div>
+      ) : null}
+
+      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <header className="space-y-1">
+          <h2 className="text-lg font-semibold text-slate-900">Business snapshot</h2>
+          <p className="text-sm text-slate-600">
+            Key information captured during onboarding helps tailor the model generator suggestions.
+          </p>
+        </header>
+
+        {missingBusinessInfo ? (
+          <p className="mt-4 text-sm text-slate-500">
+            We don’t have business information on file for this client yet. Encourage them to complete their business profile to unlock tailored prompts.
+          </p>
+        ) : (
+          <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+            {businessContextItems.map((item) => (
+              <div key={`${item.label}-${item.value}`} className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {item.label}
+                </dt>
+                <dd className="mt-2 text-sm text-slate-900">{item.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </section>
 
       {modelsError ? (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
@@ -172,12 +364,22 @@ export default async function ClientDashboardPage({ params }: PageProps) {
             );
           }
 
+          const promptsForLevel = businessContextSummary
+            ? level.prompts.map(
+                (prompt) => `${prompt}
+
+Client context:
+${businessContextSummary}`
+              )
+            : level.prompts;
+
           return (
             <PromptGenerator
               key={level.key}
               levelLabel={level.label}
               description={level.description}
-              prompts={level.prompts}
+              prompts={promptsForLevel}
+              contextItems={generatorContextItems}
             />
           );
         })}

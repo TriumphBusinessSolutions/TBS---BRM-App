@@ -2,10 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+export type PromptContextItem = {
+  label: string;
+  value: string;
+};
+
 type PromptGeneratorProps = {
   levelLabel: string;
   description: string;
   prompts: string[];
+  contextItems?: PromptContextItem[];
 };
 
 function getRandomPrompt(prompts: string[], exclude?: string): string | null {
@@ -28,6 +34,7 @@ export default function PromptGenerator({
   levelLabel,
   description,
   prompts,
+  contextItems = [],
 }: PromptGeneratorProps) {
   const [currentPrompt, setCurrentPrompt] = useState<string | null>(null);
   const [history, setHistory] = useState<string[]>([]);
@@ -45,6 +52,8 @@ export default function PromptGenerator({
   }, [prompts]);
 
   const hasPrompts = prompts.length > 0;
+
+  const contextList = useMemo(() => contextItems.filter((item) => item.value.trim().length > 0), [contextItems]);
 
   const handleGenerate = useCallback(() => {
     if (!hasPrompts) {
@@ -75,6 +84,20 @@ export default function PromptGenerator({
         <p className="text-sm text-slate-600">{description}</p>
       </header>
 
+      {contextList.length > 0 ? (
+        <section className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Client context</p>
+          <dl className="mt-3 space-y-2 text-sm text-slate-700">
+            {contextList.map((item) => (
+              <div key={`${item.label}-${item.value}`} className="grid grid-cols-[minmax(0,0.4fr)_minmax(0,1fr)] gap-3">
+                <dt className="font-medium text-slate-600">{item.label}</dt>
+                <dd className="text-slate-900">{item.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ) : null}
+
       <section className="flex flex-col gap-3">
         <button
           type="button"
@@ -100,10 +123,7 @@ export default function PromptGenerator({
           </p>
           <ul className="space-y-2 text-sm text-slate-700">
             {promptHistory.map((prompt) => (
-              <li
-                key={prompt}
-                className="rounded-md border border-slate-100 bg-white px-3 py-2"
-              >
+              <li key={prompt} className="rounded-md border border-slate-100 bg-white px-3 py-2">
                 {prompt}
               </li>
             ))}

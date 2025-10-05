@@ -57,6 +57,7 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
   const [mode, setMode] = useState<Mode>("login");
   const [status, setStatus] = useState<StatusMessage | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const redirectTimeout = useRef<number | null>(null);
 
@@ -171,6 +172,49 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
     setStatus({
       type: "success",
       message: "Signed in successfully. Redirecting you now…",
+    });
+  };
+
+  const handleForgotPassword = async () => {
+    const trimmedEmail = loginEmail.trim();
+
+    if (!trimmedEmail) {
+      setStatus({
+        type: "error",
+        message: "Enter the email tied to your account so we can help you reset your password.",
+      });
+      return;
+    }
+
+    setIsSendingResetEmail(true);
+    setStatus(null);
+
+    if (!supabase) {
+      console.log("Mock password reset payload", { email: trimmedEmail });
+      await new Promise((resolve) => setTimeout(resolve, 700));
+      setIsSendingResetEmail(false);
+      setStatus({
+        type: "success",
+        message: "Check your inbox for the password reset link.",
+      });
+      return;
+    }
+
+    const origin = window.location.origin;
+    const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+      redirectTo: `${origin}/login`,
+    });
+
+    setIsSendingResetEmail(false);
+
+    if (error) {
+      setStatus({ type: "error", message: error.message });
+      return;
+    }
+
+    setStatus({
+      type: "success",
+      message: "We’ve sent a reset link to your email. Follow the instructions to update your password.",
     });
   };
 
@@ -320,9 +364,18 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
           </div>
 
           <button
+            type="button"
+            className="form-secondary-link"
+            onClick={handleForgotPassword}
+            disabled={isSubmitting || isSendingResetEmail || isRedirecting}
+          >
+            {isSendingResetEmail ? "Sending reset link…" : "Forgot password?"}
+          </button>
+
+          <button
             type="submit"
             className="primary-button"
-            disabled={isSubmitting || isRedirecting}
+            disabled={isSubmitting || isSendingResetEmail || isRedirecting}
           >
             {isSubmitting ? "Signing In" : "Sign In"}
           </button>

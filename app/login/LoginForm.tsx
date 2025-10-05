@@ -40,7 +40,6 @@ const initialSignupState: SignUpFormState = {
   phone: "",
 };
 
-export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
 const resolveDashboardPath = (session: Session | null) => {
   const appMetaRole =
     (session?.user?.app_metadata as { role?: string } | undefined)?.role ??
@@ -53,10 +52,7 @@ const resolveDashboardPath = (session: Session | null) => {
   return "/client";
 };
 
-export default function LoginForm({
-  googleAvailable,
-  supabaseConfigured,
-}: LoginFormProps) {
+export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("login");
   const [status, setStatus] = useState<StatusMessage | null>(null);
@@ -206,6 +202,19 @@ export default function LoginForm({
     setIsSubmitting(true);
     setStatus(null);
 
+    if (!supabase) {
+      console.log("Mock signup payload", trimmedValues);
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      setIsSubmitting(false);
+      setSignupForm(initialSignupState);
+      setStatus({
+        type: "success",
+        message: "Account created! Redirecting you to the dashboard.",
+      });
+      scheduleRedirect("/dashboard");
+      return;
+    }
+
     const origin = window.location.origin;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -215,6 +224,12 @@ export default function LoginForm({
     });
 
     setIsSubmitting(false);
+
+    if (error) {
+      setStatus({ type: "error", message: error.message });
+      return;
+    }
+
     setSignupForm(initialSignupState);
     setStatus({ type: "success", message: "Account created! Redirecting you to the dashboard." });
 
@@ -314,7 +329,9 @@ export default function LoginForm({
 
           <p className="form-link">
             Don’t have an account?
-            <button type="button" onClick={() => switchTo("signup")}>Sign Up</button>
+            <button type="button" onClick={() => switchTo("signup")}>
+              Sign Up
+            </button>
           </p>
         </form>
 
@@ -418,13 +435,18 @@ export default function LoginForm({
 
           <p className="form-link">
             Already have an account?
-            <button type="button" onClick={() => switchTo("login")}>Sign In</button>
+            <button type="button" onClick={() => switchTo("login")}>
+              Sign In
+            </button>
           </p>
         </form>
       </div>
 
       {status && (
-        <div className={`status-banner ${status.type}`} role={status.type === "error" ? "alert" : "status"}>
+        <div
+          className={`status-banner ${status.type}`}
+          role={status.type === "error" ? "alert" : "status"}
+        >
           {renderStatusIcon()}
           <span>{status.message}</span>
         </div>

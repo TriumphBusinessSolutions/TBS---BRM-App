@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import ModelPanel, {
   type KpiRow,
   type MilestoneRow,
@@ -8,6 +10,7 @@ import { getSupabaseClient } from "../../lib/supabase";
 type ClientRow = {
   id: string;
   name: string;
+  business_information_completed_at?: string | null;
 };
 
 function groupByModel<T extends { model_id: string }>(rows: T[]) {
@@ -46,6 +49,24 @@ const header = (
   </header>
 );
 
+function BusinessInformationPrompt({ href }: { href: string }) {
+  return (
+    <section className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
+      <h2 className="text-lg font-semibold">Complete your business information</h2>
+      <p className="mt-2 text-sm">
+        Tell us about your business so we can tailor your BRM roadmap and surface the most relevant
+        models, milestones, and KPIs for you.
+      </p>
+      <Link
+        href={href}
+        className="mt-4 inline-flex items-center justify-center rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600"
+      >
+        Fill out the Business Information form
+      </Link>
+    </section>
+  );
+}
+
 export default async function ClientDashboardPage() {
   const supabase = getSupabaseClient();
 
@@ -65,19 +86,36 @@ export default async function ClientDashboardPage() {
     );
   }
 
-  const {
-    data: client,
-    error: clientError,
-  } = await supabase
+  const errors: string[] = [];
+  let businessInfoFieldAvailable = true;
+
+  const initialClientResult = await supabase
     .from("clients")
-    .select("id,name")
+    .select("id,name,business_information_completed_at")
     .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle<ClientRow>();
 
-  const errors: string[] = [];
-  if (clientError) {
-    errors.push(clientError.message);
+  let client = initialClientResult.data;
+
+  if (initialClientResult.error) {
+    if (initialClientResult.error.code === "42703") {
+      businessInfoFieldAvailable = false;
+      const fallbackClientResult = await supabase
+        .from("clients")
+        .select("id,name")
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle<ClientRow>();
+
+      if (fallbackClientResult.error) {
+        errors.push(fallbackClientResult.error.message);
+      }
+
+      client = fallbackClientResult.data;
+    } else {
+      errors.push(initialClientResult.error.message);
+    }
   }
 
   if (!client) {
@@ -126,16 +164,28 @@ export default async function ClientDashboardPage() {
   const milestonesByModel = groupByModel(milestones);
   const kpisByModel = groupByModel(kpis);
 
+  const showBusinessInformationPrompt =
+    businessInfoFieldAvailable && client.business_information_completed_at == null;
+  const businessInformationFormHref = "/client/business-information";
+
   return (
     <main className="mx-auto max-w-4xl space-y-6 px-6 py-8">
       {header}
       {renderErrors(errors)}
 
+      {showBusinessInformationPrompt ? (
+        <BusinessInformationPrompt href={businessInformationFormHref} />
+      ) : null}
+
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold text-slate-900">Client: {client.name}</h2>
 
         {models.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-500">No models yet.</p>
+          <p className="mt-3 text-sm text-slate-500">
+            {showBusinessInformationPrompt
+              ? "We’ll populate your BRM plan after you complete the Business Information form."
+              : "No models yet."}
+          </p>
         ) : (
           <div className="mt-6 space-y-4">
             {models.map((model) => (

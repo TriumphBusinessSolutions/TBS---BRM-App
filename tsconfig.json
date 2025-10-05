@@ -16,6 +16,9 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
+      "@/*": [
+        "./*"
+      ]
       "zod": ["./lib/zod"],
       "zod/*": ["./lib/zod"]
     },

@@ -1,6 +1,7 @@
 // lib/supabase-server.ts
 import { cookies } from "next/headers";
-import { createClient } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/ssr";
+import type { Database } from "@/types/supabase";
 
 /**
  * Lightweight server-side Supabase client that reuses the access token stored
@@ -9,24 +10,24 @@ import { createClient } from "@supabase/supabase-js";
  */
 export function getServerClient() {
   const cookieStore = cookies();
-  const accessToken = cookieStore.get("sb-access-token")?.value;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-        detectSessionInUrl: false,
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return null;
+  }
+
+  return createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      get(name: string) {
+        return cookieStore.get(name)?.value;
       },
-      global: {
-        headers: accessToken
-          ? {
-              Authorization: `Bearer ${accessToken}`,
-            }
-          : {},
+      set(name: string, value: string, options: any) {
+        cookieStore.set({ name, value, ...options });
       },
-    }
-  );
+      remove(name: string, options: any) {
+        cookieStore.set({ name, value: "", ...options });
+      },
+    },
+  });
 }

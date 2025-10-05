@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
+
 import { getSupabaseBrowserClient } from "../../lib/supabase";
 import type { Database } from "../../types/supabase";
 
 type LoginFormProps = {
-  googleAvailable: boolean;
   supabaseConfigured: boolean;
 };
 
@@ -16,16 +16,39 @@ type StatusMessage = {
   message: string;
 };
 
-export default function LoginForm({
-  googleAvailable,
-  supabaseConfigured,
-}: LoginFormProps) {
+type AccountRequestFormState = {
+  firstName: string;
+  lastName: string;
+  businessName: string;
+  email: string;
+  phone: string;
+};
+
+const initialAccountRequestState: AccountRequestFormState = {
+  firstName: "",
+  lastName: "",
+  businessName: "",
+  email: "",
+  phone: "",
+};
+
+const fieldWrapperClass =
+  "group relative overflow-hidden rounded-2xl border border-[#dbe4ff] bg-white/80 shadow-[0_18px_40px_-24px_rgba(38,66,145,0.45)] transition duration-300 focus-within:border-transparent focus-within:shadow-[0_24px_72px_-26px_rgba(52,88,189,0.55)]";
+const fieldHighlightClass =
+  "pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-[#5b8dff]/12 via-transparent to-[#ffb778]/18 opacity-0 transition duration-300 group-focus-within:opacity-100";
+const inputClass =
+  "relative z-10 w-full rounded-2xl border-0 bg-transparent px-5 py-[15px] text-[15px] font-medium text-[#10204b] placeholder:text-[#7a8cb6] focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60";
+
+export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [mode, setMode] = useState<"login" | "signup">("login");
   const [status, setStatus] = useState<StatusMessage | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+  const [accountForm, setAccountForm] = useState(initialAccountRequestState);
 
   const supabase = useMemo<SupabaseClient<Database> | null>(() => {
     if (!supabaseConfigured) {
@@ -69,7 +92,11 @@ export default function LoginForm({
     };
   }, [router, supabase]);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    setStatus(null);
+  }, [mode]);
+
+  const handleLoginSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!supabase) {
@@ -80,20 +107,28 @@ export default function LoginForm({
       return;
     }
 
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail) {
+    const trimmedIdentifier = identifier.trim();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedIdentifier) {
       setStatus({
         type: "error",
-        message: "Enter the email address you use with TBS BRM.",
+        message: "Enter your username or business email.",
       });
+      return;
+    }
+
+    if (!trimmedPassword) {
+      setStatus({ type: "error", message: "Enter your password." });
       return;
     }
 
     setIsSubmitting(true);
     setStatus(null);
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email: trimmedEmail,
+    const { error } = await supabase.auth.signInWithPassword({
+      email: trimmedIdentifier,
+      password: trimmedPassword,
     });
 
     setIsSubmitting(false);
@@ -105,190 +140,320 @@ export default function LoginForm({
 
     setStatus({
       type: "success",
-      message: "Check your email for a sign-in link.",
+      message: "Signed in successfully. Redirecting you to your dashboard…",
     });
   };
 
-  const handleGoogleSignIn = async () => {
-    if (!supabase) {
+  const handleAccountFormChange = (field: keyof AccountRequestFormState) =>
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const value = event.target.value;
+      setAccountForm((previous) => ({ ...previous, [field]: value }));
+    };
+
+  const handleAccountRequestSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const trimmedValues = {
+      firstName: accountForm.firstName.trim(),
+      lastName: accountForm.lastName.trim(),
+      businessName: accountForm.businessName.trim(),
+      email: accountForm.email.trim(),
+      phone: accountForm.phone.trim(),
+    } as const;
+
+    if (Object.values(trimmedValues).some((value) => !value)) {
       setStatus({
         type: "error",
-        message: "Authentication is not configured yet. Please try again later.",
+        message: "Please complete every field so your mentor has the details they need.",
       });
       return;
     }
 
-    setIsGoogleLoading(true);
+    setIsSubmitting(true);
     setStatus(null);
 
-    const origin = window.location.origin;
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${origin}/coach`,
-      },
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+
+    setIsSubmitting(false);
+    setAccountForm(initialAccountRequestState);
+    setStatus({
+      type: "success",
+      message:
+        "Thank you! Your mentor has been notified. You'll receive an email as soon as your access is approved.",
     });
-
-    setIsGoogleLoading(false);
-
-    if (error) {
-      setStatus({ type: "error", message: error.message });
-    }
   };
 
-  const disableForm = isSubmitting || isRedirecting || !supabaseConfigured;
-  const disableGoogle = disableForm || isGoogleLoading || !googleAvailable;
+  const disableLogin = isSubmitting || isRedirecting;
+  const disableAccountRequest = isSubmitting;
+  const toggleDisabled = isSubmitting || isRedirecting;
+  const isLogin = mode === "login";
+
+  const handleModeChange = (nextMode: "login" | "signup") => {
+    if (toggleDisabled || mode === nextMode) {
+      return;
+    }
+
+    setMode(nextMode);
+  };
+
+  const toggleButtonClass = (active: boolean) =>
+    `relative flex-1 overflow-hidden rounded-2xl px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.35em] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3147ff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
+      active
+        ? "bg-gradient-to-r from-[#2f5aff] via-[#5f7bff] to-[#ff9653] text-white shadow-[0_14px_34px_rgba(46,82,200,0.45)]"
+        : "text-[#5e6f9a] hover:text-[#162d70]"
+    }`;
+
+  const submitButtonBase =
+    "inline-flex w-full items-center justify-center rounded-2xl px-5 py-[15px] text-[12px] font-semibold uppercase tracking-[0.42em] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2a55ff] focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-60";
 
   return (
-    <div className="w-full">
-      <div className="rounded-2xl bg-white/95 p-8 shadow-[0_18px_35px_rgba(15,22,38,0.12)] ring-1 ring-[#004aad]/10">
-        <form onSubmit={handleSubmit} className="space-y-6" aria-busy={disableForm}>
+    <section aria-labelledby="login-panel" className="space-y-8">
+      <div className="rounded-[28px] bg-white/70 p-1 shadow-[0_18px_46px_rgba(35,58,132,0.25)]">
+        <div className="flex gap-2 rounded-[24px] bg-white/90 p-1">
+          <button
+            type="button"
+            onClick={() => handleModeChange("login")}
+            className={toggleButtonClass(isLogin)}
+            aria-pressed={isLogin}
+            disabled={toggleDisabled}
+          >
+            Sign in
+          </button>
+          <button
+            type="button"
+            onClick={() => handleModeChange("signup")}
+            className={toggleButtonClass(!isLogin)}
+            aria-pressed={!isLogin}
+            disabled={toggleDisabled}
+          >
+            Request access
+          </button>
+        </div>
+      </div>
+
+      {isLogin ? (
+        <form className="space-y-6" onSubmit={handleLoginSubmit} aria-busy={disableLogin}>
           <div className="space-y-2 text-center">
-            <h2 className="text-2xl font-semibold text-[#004aad]">Sign in to TBS BRM</h2>
-            <p className="text-sm text-[#415170]">
-              We&#39;ll send a secure magic link to your inbox.
+            <h2 id="login-panel" className="text-2xl font-semibold text-[#0b1f3f]">
+              Welcome back, Triumph leader
+            </h2>
+            <p className="text-sm text-[#4f5f82]">
+              Slide into your command center and sync with your mentor in moments.
             </p>
           </div>
 
-          <div className="space-y-2 text-left">
-            <label className="block text-sm font-medium text-[#0f1626]" htmlFor="email">
-              Email address
+          <div className="space-y-3 text-left">
+            <label className="block text-sm font-semibold text-[#10254a]" htmlFor="identifier">
+              Username or business email
             </label>
-            <input
-              id="email"
-              type="email"
-              name="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              disabled={disableForm}
-              className="w-full rounded-xl border border-[#004aad]/20 bg-white px-3 py-2.5 text-sm text-[#0f1626] shadow-sm transition focus:border-[#fa9100] focus:outline-none focus:ring-2 focus:ring-[#fa9100]/40 disabled:cursor-not-allowed disabled:bg-[#e7ecf7]"
-            />
+            <div className={fieldWrapperClass}>
+              <div className={fieldHighlightClass} />
+              <input
+                id="identifier"
+                name="identifier"
+                type="text"
+                autoComplete="username"
+                placeholder="you@triumph.com"
+                value={identifier}
+                onChange={(event) => setIdentifier(event.target.value)}
+                disabled={disableLogin}
+                className={inputClass}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3 text-left">
+            <label className="block text-sm font-semibold text-[#10254a]" htmlFor="password">
+              Password
+            </label>
+            <div className={fieldWrapperClass}>
+              <div className={fieldHighlightClass} />
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                disabled={disableLogin}
+                className={inputClass}
+              />
+            </div>
           </div>
 
           <button
             type="submit"
-            className="inline-flex w-full items-center justify-center rounded-xl bg-[#004aad] px-4 py-2.5 text-sm font-semibold uppercase tracking-wide text-white shadow-[0_12px_20px_rgba(0,74,173,0.35)] transition hover:bg-[#003b8d] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fa9100] focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:bg-[#6d8bc5]"
-            disabled={disableForm}
+            className={`${submitButtonBase} bg-gradient-to-r from-[#2f5aff] via-[#496dff] to-[#ff7c3a] text-white shadow-[0_26px_56px_-24px_rgba(31,72,180,0.65)] hover:from-[#234fea] hover:via-[#3a60f0] hover:to-[#ff6f1f]`}
+            disabled={disableLogin || !identifier || !password}
           >
-            {isSubmitting ? "Sending…" : "Send magic link"}
+            {isSubmitting ? "Signing in…" : "Enter the studio"}
           </button>
         </form>
+      ) : (
+        <form className="space-y-5" onSubmit={handleAccountRequestSubmit} aria-busy={disableAccountRequest}>
+          <div className="space-y-2 text-center">
+            <h2 id="login-panel" className="text-2xl font-semibold text-[#0b1f3f]">
+              Request your Triumph access
+            </h2>
+            <p className="text-sm text-[#4f5f82]">
+              Share the essentials so your mentor can unlock the Business Revenue Model App for you.
+            </p>
+          </div>
 
-        <div className="mt-6 flex items-center gap-4 text-sm text-[#566483]">
-          <span className="h-px flex-1 bg-[#d7def2]" aria-hidden="true" />
-          <span>or continue with</span>
-          <span className="h-px flex-1 bg-[#d7def2]" aria-hidden="true" />
-        </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-[#10254a]" htmlFor="firstName">
+                First name
+              </label>
+              <div className={fieldWrapperClass}>
+                <div className={fieldHighlightClass} />
+                <input
+                  id="firstName"
+                  name="firstName"
+                  type="text"
+                  autoComplete="given-name"
+                  placeholder="Jordan"
+                  value={accountForm.firstName}
+                  onChange={handleAccountFormChange("firstName")}
+                  disabled={disableAccountRequest}
+                  className={inputClass}
+                />
+              </div>
+            </div>
 
-        <button
-          type="button"
-          onClick={handleGoogleSignIn}
-          disabled={disableGoogle}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#004aad]/15 bg-white px-4 py-2.5 text-sm font-semibold text-[#0f1626] shadow-sm transition hover:border-[#fa9100]/40 hover:bg-[#fef7ef] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fa9100] focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:border-[#d4dcf4] disabled:text-[#9aa6c2] disabled:hover:bg-white"
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-[#10254a]" htmlFor="lastName">
+                Last name
+              </label>
+              <div className={fieldWrapperClass}>
+                <div className={fieldHighlightClass} />
+                <input
+                  id="lastName"
+                  name="lastName"
+                  type="text"
+                  autoComplete="family-name"
+                  placeholder="Rivera"
+                  value={accountForm.lastName}
+                  onChange={handleAccountFormChange("lastName")}
+                  disabled={disableAccountRequest}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold text-[#10254a]" htmlFor="businessName">
+              Business name
+            </label>
+            <div className={fieldWrapperClass}>
+              <div className={fieldHighlightClass} />
+              <input
+                id="businessName"
+                name="businessName"
+                type="text"
+                autoComplete="organization"
+                placeholder="Triumph Studios"
+                value={accountForm.businessName}
+                onChange={handleAccountFormChange("businessName")}
+                disabled={disableAccountRequest}
+                className={inputClass}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-[#10254a]" htmlFor="requestEmail">
+                Work email
+              </label>
+              <div className={fieldWrapperClass}>
+                <div className={fieldHighlightClass} />
+                <input
+                  id="requestEmail"
+                  name="requestEmail"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="hello@business.com"
+                  value={accountForm.email}
+                  onChange={handleAccountFormChange("email")}
+                  disabled={disableAccountRequest}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-[#10254a]" htmlFor="phone">
+                Phone number
+              </label>
+              <div className={fieldWrapperClass}>
+                <div className={fieldHighlightClass} />
+                <input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  autoComplete="tel"
+                  placeholder="(555) 123-4567"
+                  value={accountForm.phone}
+                  onChange={handleAccountFormChange("phone")}
+                  disabled={disableAccountRequest}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className={`${submitButtonBase} bg-gradient-to-r from-[#ff8a3a] via-[#ffa45a] to-[#ffd07a] text-[#311600] shadow-[0_26px_54px_-24px_rgba(250,145,0,0.55)] hover:from-[#ff7a1f] hover:via-[#ff9741] hover:to-[#ffcb66]`}
+            disabled={disableAccountRequest}
+          >
+            {isSubmitting ? "Submitting…" : "Notify my mentor"}
+          </button>
+        </form>
+      )}
+
+      {status && (
+        <div
+          className={`relative overflow-hidden rounded-2xl border px-5 py-4 text-sm shadow-[0_18px_40px_-28px_rgba(15,40,95,0.45)] transition ${
+            status.type === "success"
+              ? "border-emerald-200/70 bg-emerald-50/95 text-emerald-800"
+              : "border-rose-200/70 bg-rose-50/95 text-rose-700"
+          }`}
+          role={status.type === "error" ? "alert" : "status"}
+          aria-live="polite"
         >
-          {isGoogleLoading ? (
-            <svg
-              className="h-4 w-4 animate-spin text-[#fa9100]"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-                fill="none"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-              />
-            </svg>
-          ) : (
-            <svg
-              className="h-4 w-4 text-[#004aad]"
-              viewBox="0 0 533.5 544.3"
-              aria-hidden="true"
-            >
-              <path
-                d="M533.5 278.4c0-17.4-1.5-34.1-4.3-50.2H272v95h147.1c-6.4 34.5-25.9 63.8-55.2 83.4v69.2h89.2c52.1-48 80.4-118.8 80.4-197.4z"
-                fill="#4285f4"
-              />
-              <path
-                d="M272 544.3c74.8 0 137.5-24.8 183.3-67.2l-89.2-69.2c-24.8 16.7-56.5 26.6-94.1 26.6-72.4 0-133.9-48.9-155.9-114.5H23.9v71.9C69.4 482.3 164.5 544.3 272 544.3z"
-                fill="#34a853"
-              />
-              <path
-                d="M116.1 319.9c-10.8-32.5-10.8-67.5 0-100l-92.2-71.9C3.6 210 0 240.9 0 272s3.6 62 23.9 123.9l92.2-71.9z"
-                fill="#fbbc04"
-              />
-              <path
-                d="M272 107.7c39.5-.6 77.2 13.6 106.3 39.7l79.7-79.7C407.2 24.5 345 0 272 0 164.5 0 69.4 61.9 23.9 176.1l92.2 71.9C138.1 156.6 199.6 107.7 272 107.7z"
-                fill="#ea4335"
-              />
-            </svg>
-          )}
-          Continue with Google
-        </button>
-
-        {!googleAvailable && (
-          <p className="mt-2 text-center text-xs text-slate-400" role="note">
-            Google sign-in isn&#39;t available in this environment.
-          </p>
-        )}
-
-        {!supabaseConfigured && (
-          <p className="mt-4 text-center text-xs text-amber-600" role="alert">
-            Supabase credentials are not configured. Sign-in is disabled until the environment is
-            ready.
-          </p>
-        )}
-
-        {status && (
-          <div
-            className={`mt-6 rounded-lg border px-3 py-2 text-sm ${
-              status.type === "success"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                : "border-rose-200 bg-rose-50 text-rose-700"
-            }`}
-            role={status.type === "error" ? "alert" : "status"}
-            aria-live="polite"
-          >
-            {status.message}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/80 via-transparent to-white/60 opacity-80" aria-hidden="true" />
+          <div className="relative flex items-start gap-3">
+            <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/70 text-xs font-semibold">
+              {status.type === "success" ? "✓" : "!"}
+            </span>
+            <span>{status.message}</span>
           </div>
-        )}
+        </div>
+      )}
 
-        {isRedirecting && (
-          <div
-            className="mt-4 flex items-center justify-center gap-2 text-sm text-slate-500"
-            role="status"
-            aria-live="polite"
-          >
-            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" aria-hidden="true">
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-                fill="none"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-              />
-            </svg>
-            Redirecting to your dashboard…
-          </div>
-        )}
-      </div>
-    </div>
+      {!supabaseConfigured && (
+        <p className="rounded-2xl border border-amber-200 bg-amber-50/95 px-4 py-3 text-center text-xs text-amber-800" role="note">
+          Supabase credentials are not configured. Sign-in will be available once the environment is ready.
+        </p>
+      )}
+
+      {isRedirecting && (
+        <div
+          className="flex items-center justify-center gap-2 rounded-full bg-[#e7edff] px-4 py-2 text-sm text-[#2c3f6d]"
+          role="status"
+          aria-live="polite"
+        >
+          <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" aria-hidden="true">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+          </svg>
+          Redirecting to your dashboard…
+        </div>
+      )}
+    </section>
   );
 }

@@ -1,31 +1,57 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import { useRouter } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
+
 import { getSupabaseBrowserClient } from "../../lib/supabase";
 import type { Database } from "../../types/supabase";
 
 type LoginFormProps = {
-  googleAvailable: boolean;
   supabaseConfigured: boolean;
 };
+
+type Mode = "login" | "signup";
 
 type StatusMessage = {
   type: "success" | "error";
   message: string;
 };
 
-export default function LoginForm({
-  googleAvailable,
-  supabaseConfigured,
-}: LoginFormProps) {
+type SignUpFormState = {
+  firstName: string;
+  lastName: string;
+  businessName: string;
+  email: string;
+  phone: string;
+};
+
+const initialSignupState: SignUpFormState = {
+  firstName: "",
+  lastName: "",
+  businessName: "",
+  email: "",
+  phone: "",
+};
+
+export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [mode, setMode] = useState<Mode>("login");
   const [status, setStatus] = useState<StatusMessage | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const redirectTimeout = useRef<number | null>(null);
+
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [signupForm, setSignupForm] = useState<SignUpFormState>(initialSignupState);
 
   const supabase = useMemo<SupabaseClient<Database> | null>(() => {
     if (!supabaseConfigured) {
@@ -46,6 +72,7 @@ export default function LoginForm({
       if (!isMounted) {
         return;
       }
+
       if (data.session) {
         setIsRedirecting(true);
         router.replace("/coach");
@@ -69,22 +96,39 @@ export default function LoginForm({
     };
   }, [router, supabase]);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  useEffect(() => {
+    setStatus(null);
+  }, [mode]);
 
-    if (!supabase) {
-      setStatus({
-        type: "error",
-        message: "Authentication is not configured yet. Please try again later.",
-      });
-      return;
+  useEffect(() => {
+    return () => {
+      if (redirectTimeout.current) {
+        window.clearTimeout(redirectTimeout.current);
+      }
+    };
+  }, []);
+
+  const scheduleRedirect = (path: string, delay = 400) => {
+    if (redirectTimeout.current) {
+      window.clearTimeout(redirectTimeout.current);
     }
 
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail) {
+    redirectTimeout.current = window.setTimeout(() => {
+      setIsRedirecting(true);
+      router.push(path);
+    }, delay);
+  };
+
+  const handleLoginSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const trimmedEmail = loginEmail.trim();
+    const trimmedPassword = loginPassword.trim();
+
+    if (!trimmedEmail || !trimmedPassword) {
       setStatus({
         type: "error",
-        message: "Enter the email address you use with TBS BRM.",
+        message: "Please provide both your email address and password to continue.",
       });
       return;
     }
@@ -92,8 +136,18 @@ export default function LoginForm({
     setIsSubmitting(true);
     setStatus(null);
 
-    const { error } = await supabase.auth.signInWithOtp({
+    if (!supabase) {
+      console.log("Mock login payload", { email: trimmedEmail });
+      await new Promise((resolve) => setTimeout(resolve, 700));
+      setIsSubmitting(false);
+      setStatus({ type: "success", message: "Signed in! Preparing your dashboard…" });
+      scheduleRedirect("/dashboard", 500);
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({
       email: trimmedEmail,
+      password: trimmedPassword,
     });
 
     setIsSubmitting(false);
@@ -105,190 +159,275 @@ export default function LoginForm({
 
     setStatus({
       type: "success",
-      message: "Check your email for a sign-in link.",
+      message: "Signed in successfully. Redirecting you now…",
     });
   };
 
-  const handleGoogleSignIn = async () => {
-    if (!supabase) {
+  const handleSignupChange = (field: keyof SignUpFormState) =>
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const value = event.target.value;
+      setSignupForm((previous) => ({ ...previous, [field]: value }));
+    };
+
+  const handleSignupSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const trimmedValues = {
+      firstName: signupForm.firstName.trim(),
+      lastName: signupForm.lastName.trim(),
+      businessName: signupForm.businessName.trim(),
+      email: signupForm.email.trim(),
+      phone: signupForm.phone.trim(),
+    } as const;
+
+    if (Object.values(trimmedValues).some((value) => !value)) {
       setStatus({
         type: "error",
-        message: "Authentication is not configured yet. Please try again later.",
+        message: "Complete every field so your mentor can confirm your access.",
       });
       return;
     }
 
-    setIsGoogleLoading(true);
+    setIsSubmitting(true);
     setStatus(null);
 
-    const origin = window.location.origin;
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${origin}/coach`,
-      },
-    });
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    console.log("Mock signup payload", trimmedValues);
 
-    setIsGoogleLoading(false);
+    setIsSubmitting(false);
+    setSignupForm(initialSignupState);
+    setStatus({ type: "success", message: "Account created! Redirecting you to the dashboard." });
 
-    if (error) {
-      setStatus({ type: "error", message: error.message });
-    }
+    scheduleRedirect("/dashboard");
   };
 
-  const disableForm = isSubmitting || isRedirecting || !supabaseConfigured;
-  const disableGoogle = disableForm || isGoogleLoading || !googleAvailable;
+  const switchTo = (nextMode: Mode) => {
+    if (mode === nextMode || isSubmitting) {
+      return;
+    }
+
+    setMode(nextMode);
+  };
+
+  const renderStatusIcon = () => {
+    if (!status) {
+      return null;
+    }
+
+    if (status.type === "success") {
+      return (
+        <svg viewBox="0 0 20 20" aria-hidden="true">
+          <path
+            d="M7.8 13.4 4.7 10.3a1 1 0 0 1 1.4-1.4l2 2 5-5a1 1 0 0 1 1.4 1.4l-5.7 5.7a1 1 0 0 1-1.4 0Z"
+            fill="currentColor"
+          />
+        </svg>
+      );
+    }
+
+    return (
+      <svg viewBox="0 0 20 20" aria-hidden="true">
+        <path d="M9 5h2l-.5 7h-1Z" fill="currentColor" />
+        <circle cx="10" cy="14" r="1" fill="currentColor" />
+      </svg>
+    );
+  };
 
   return (
-    <div className="w-full">
-      <div className="rounded-2xl bg-white/95 p-8 shadow-[0_18px_35px_rgba(15,22,38,0.12)] ring-1 ring-[#004aad]/10">
-        <form onSubmit={handleSubmit} className="space-y-6" aria-busy={disableForm}>
-          <div className="space-y-2 text-center">
-            <h2 className="text-2xl font-semibold text-[#004aad]">Sign in to TBS BRM</h2>
-            <p className="text-sm text-[#415170]">
-              We&#39;ll send a secure magic link to your inbox.
-            </p>
+    <section className="form-shell" aria-live="polite">
+      <header>
+        <h2>{mode === "login" ? "Welcome Back" : "Create Your Account"}</h2>
+        <p>
+          {mode === "login"
+            ? "Access the Business Revenue Model command center and sync with your mentor in moments."
+            : "Share a few details so your Triumph mentor can unlock the platform for you."}
+        </p>
+      </header>
+
+      <div className="form-panels">
+        <form
+          className={`form-panel form-panel--login ${mode === "login" ? "is-active" : ""}`}
+          onSubmit={handleLoginSubmit}
+          aria-hidden={mode !== "login"}
+        >
+          <div className="field">
+            <label htmlFor="login-email">Email</label>
+            <div className="input-shell">
+              <input
+                id="login-email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@triumph.com"
+                value={loginEmail}
+                onChange={(event) => setLoginEmail(event.target.value)}
+                disabled={isSubmitting || isRedirecting}
+                required
+              />
+            </div>
           </div>
 
-          <div className="space-y-2 text-left">
-            <label className="block text-sm font-medium text-[#0f1626]" htmlFor="email">
-              Email address
-            </label>
-            <input
-              id="email"
-              type="email"
-              name="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              disabled={disableForm}
-              className="w-full rounded-xl border border-[#004aad]/20 bg-white px-3 py-2.5 text-sm text-[#0f1626] shadow-sm transition focus:border-[#fa9100] focus:outline-none focus:ring-2 focus:ring-[#fa9100]/40 disabled:cursor-not-allowed disabled:bg-[#e7ecf7]"
-            />
+          <div className="field">
+            <label htmlFor="login-password">Password</label>
+            <div className="input-shell">
+              <input
+                id="login-password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                placeholder="Enter your password"
+                value={loginPassword}
+                onChange={(event) => setLoginPassword(event.target.value)}
+                disabled={isSubmitting || isRedirecting}
+                required
+              />
+            </div>
           </div>
 
           <button
             type="submit"
-            className="inline-flex w-full items-center justify-center rounded-xl bg-[#004aad] px-4 py-2.5 text-sm font-semibold uppercase tracking-wide text-white shadow-[0_12px_20px_rgba(0,74,173,0.35)] transition hover:bg-[#003b8d] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fa9100] focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:bg-[#6d8bc5]"
-            disabled={disableForm}
+            className="primary-button"
+            disabled={isSubmitting || isRedirecting}
           >
-            {isSubmitting ? "Sending…" : "Send magic link"}
+            {isSubmitting ? "Signing In" : "Sign In"}
           </button>
+
+          <p className="form-link">
+            Don’t have an account?
+            <button type="button" onClick={() => switchTo("signup")}>Sign Up</button>
+          </p>
         </form>
 
-        <div className="mt-6 flex items-center gap-4 text-sm text-[#566483]">
-          <span className="h-px flex-1 bg-[#d7def2]" aria-hidden="true" />
-          <span>or continue with</span>
-          <span className="h-px flex-1 bg-[#d7def2]" aria-hidden="true" />
-        </div>
-
-        <button
-          type="button"
-          onClick={handleGoogleSignIn}
-          disabled={disableGoogle}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#004aad]/15 bg-white px-4 py-2.5 text-sm font-semibold text-[#0f1626] shadow-sm transition hover:border-[#fa9100]/40 hover:bg-[#fef7ef] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#fa9100] focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:border-[#d4dcf4] disabled:text-[#9aa6c2] disabled:hover:bg-white"
+        <form
+          className={`form-panel form-panel--signup ${mode === "signup" ? "is-active" : ""}`}
+          onSubmit={handleSignupSubmit}
+          aria-hidden={mode !== "signup"}
         >
-          {isGoogleLoading ? (
-            <svg
-              className="h-4 w-4 animate-spin text-[#fa9100]"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-                fill="none"
+          <div className="field">
+            <label htmlFor="signup-firstName">First Name</label>
+            <div className="input-shell">
+              <input
+                id="signup-firstName"
+                name="firstName"
+                type="text"
+                autoComplete="given-name"
+                placeholder="Jordan"
+                value={signupForm.firstName}
+                onChange={handleSignupChange("firstName")}
+                disabled={isSubmitting || isRedirecting}
+                required
               />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-              />
-            </svg>
-          ) : (
-            <svg
-              className="h-4 w-4 text-[#004aad]"
-              viewBox="0 0 533.5 544.3"
-              aria-hidden="true"
-            >
-              <path
-                d="M533.5 278.4c0-17.4-1.5-34.1-4.3-50.2H272v95h147.1c-6.4 34.5-25.9 63.8-55.2 83.4v69.2h89.2c52.1-48 80.4-118.8 80.4-197.4z"
-                fill="#4285f4"
-              />
-              <path
-                d="M272 544.3c74.8 0 137.5-24.8 183.3-67.2l-89.2-69.2c-24.8 16.7-56.5 26.6-94.1 26.6-72.4 0-133.9-48.9-155.9-114.5H23.9v71.9C69.4 482.3 164.5 544.3 272 544.3z"
-                fill="#34a853"
-              />
-              <path
-                d="M116.1 319.9c-10.8-32.5-10.8-67.5 0-100l-92.2-71.9C3.6 210 0 240.9 0 272s3.6 62 23.9 123.9l92.2-71.9z"
-                fill="#fbbc04"
-              />
-              <path
-                d="M272 107.7c39.5-.6 77.2 13.6 106.3 39.7l79.7-79.7C407.2 24.5 345 0 272 0 164.5 0 69.4 61.9 23.9 176.1l92.2 71.9C138.1 156.6 199.6 107.7 272 107.7z"
-                fill="#ea4335"
-              />
-            </svg>
-          )}
-          Continue with Google
-        </button>
-
-        {!googleAvailable && (
-          <p className="mt-2 text-center text-xs text-slate-400" role="note">
-            Google sign-in isn&#39;t available in this environment.
-          </p>
-        )}
-
-        {!supabaseConfigured && (
-          <p className="mt-4 text-center text-xs text-amber-600" role="alert">
-            Supabase credentials are not configured. Sign-in is disabled until the environment is
-            ready.
-          </p>
-        )}
-
-        {status && (
-          <div
-            className={`mt-6 rounded-lg border px-3 py-2 text-sm ${
-              status.type === "success"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                : "border-rose-200 bg-rose-50 text-rose-700"
-            }`}
-            role={status.type === "error" ? "alert" : "status"}
-            aria-live="polite"
-          >
-            {status.message}
+            </div>
           </div>
-        )}
 
-        {isRedirecting && (
-          <div
-            className="mt-4 flex items-center justify-center gap-2 text-sm text-slate-500"
-            role="status"
-            aria-live="polite"
-          >
-            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" aria-hidden="true">
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-                fill="none"
+          <div className="field">
+            <label htmlFor="signup-lastName">Last Name</label>
+            <div className="input-shell">
+              <input
+                id="signup-lastName"
+                name="lastName"
+                type="text"
+                autoComplete="family-name"
+                placeholder="Rivera"
+                value={signupForm.lastName}
+                onChange={handleSignupChange("lastName")}
+                disabled={isSubmitting || isRedirecting}
+                required
               />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-              />
-            </svg>
-            Redirecting to your dashboard…
+            </div>
           </div>
-        )}
+
+          <div className="field">
+            <label htmlFor="signup-businessName">Business Name</label>
+            <div className="input-shell">
+              <input
+                id="signup-businessName"
+                name="businessName"
+                type="text"
+                autoComplete="organization"
+                placeholder="Triumph Studios"
+                value={signupForm.businessName}
+                onChange={handleSignupChange("businessName")}
+                disabled={isSubmitting || isRedirecting}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label htmlFor="signup-email">Email</label>
+            <div className="input-shell">
+              <input
+                id="signup-email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="hello@business.com"
+                value={signupForm.email}
+                onChange={handleSignupChange("email")}
+                disabled={isSubmitting || isRedirecting}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label htmlFor="signup-phone">Phone Number</label>
+            <div className="input-shell">
+              <input
+                id="signup-phone"
+                name="phone"
+                type="tel"
+                autoComplete="tel"
+                placeholder="(555) 123-4567"
+                value={signupForm.phone}
+                onChange={handleSignupChange("phone")}
+                disabled={isSubmitting || isRedirecting}
+                required
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="primary-button"
+            disabled={isSubmitting || isRedirecting}
+          >
+            {isSubmitting ? "Submitting" : "Register"}
+          </button>
+
+          <p className="form-link">
+            Already have an account?
+            <button type="button" onClick={() => switchTo("login")}>Sign In</button>
+          </p>
+        </form>
       </div>
-    </div>
+
+      {status && (
+        <div className={`status-banner ${status.type}`} role={status.type === "error" ? "alert" : "status"}>
+          {renderStatusIcon()}
+          <span>{status.message}</span>
+        </div>
+      )}
+
+      {!supabaseConfigured && (
+        <p className="supabase-warning">
+          Authentication isn’t wired up yet. Replace the mock handlers with your API calls once Supabase credentials are in place.
+        </p>
+      )}
+
+      {isRedirecting && (
+        <div className="redirecting-chip" role="status">
+          <svg viewBox="0 0 24 24" aria-hidden="true" className="spin-icon">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.4" />
+            <path
+              d="M12 2a10 10 0 0 1 9.54 7.09l-2.38.7A7.5 7.5 0 0 0 12 4.5V2Z"
+              fill="currentColor"
+            />
+          </svg>
+          Redirecting…
+        </div>
+      )}
+    </section>
   );
 }

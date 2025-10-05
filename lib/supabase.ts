@@ -1,21 +1,32 @@
-// lib/supabase.ts
-import { createClient } from "@supabase/supabase-js";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "../types/supabase";
 
-let supabaseClient: SupabaseClient | null = null;
+let browserClient: SupabaseClient<Database> | null = null;
 
-export function getSupabaseClient(): SupabaseClient | null {
-  if (supabaseClient) {
-    return supabaseClient;
+export function getSupabaseBrowserClient(): SupabaseClient<Database> | null {
+  if (browserClient) {
+    return browserClient;
   }
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!url || !anonKey) {
+  if (!supabaseUrl || !supabaseAnonKey) {
     return null;
   }
 
-  supabaseClient = createClient(url, anonKey);
-  return supabaseClient;
+  browserClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  });
+
+  return browserClient;
+}
+
+export function isSupabaseConfigured(): boolean {
+  return Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  );
 }

@@ -46,6 +46,8 @@ export default function BusinessInformationModal({ open, onClose }: BusinessInfo
       return;
     }
 
+    const supabaseClient = supabase;
+
     let isMounted = true;
     setIsLoading(true);
     setLoadError(null);
@@ -54,7 +56,7 @@ export default function BusinessInformationModal({ open, onClose }: BusinessInfo
       const {
         data: { user },
         error: userError,
-      } = await supabase.auth.getUser();
+      } = await supabaseClient.auth.getUser();
 
       if (!isMounted) {
         return;
@@ -83,12 +85,16 @@ export default function BusinessInformationModal({ open, onClose }: BusinessInfo
       }
 
       const [contextResult, offerResult] = await Promise.all([
-        supabase
+        supabaseClient
           .from("business_context")
           .select("*")
           .eq("user_id", user.id)
           .maybeSingle<BusinessContextRow>(),
-        supabase.from("offer_stack").select("*").eq("user_id", user.id).order("slot", { ascending: true }),
+        supabaseClient
+          .from("offer_stack")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("slot", { ascending: true }),
       ]);
 
       if (!isMounted) {

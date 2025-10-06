@@ -35,9 +35,16 @@
 }
 
 .nav {
-  display: none;
+  display: flex;
   align-items: center;
   gap: var(--space-1);
+  overflow-x: auto;
+  padding-block: 2px;
+  scrollbar-width: none;
+}
+
+.nav::-webkit-scrollbar {
+  display: none;
 }
 
 .navButton {
@@ -50,6 +57,7 @@
   color: var(--color-text-soft);
   transition: color 0.2s ease, background 0.2s ease;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .navButton:hover {
@@ -124,8 +132,9 @@
   outline: none;
 }
 
-@media (min-width: 720px) {
+@media (min-width: 960px) {
   .nav {
-    display: flex;
+    justify-content: center;
+    gap: var(--space-2);
   }
 }

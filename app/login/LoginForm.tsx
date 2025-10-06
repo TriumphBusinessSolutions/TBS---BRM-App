@@ -9,9 +9,11 @@ import {
   type FormEvent,
 } from "react";
 import { useRouter } from "next/navigation";
-import type { Session, SupabaseClient } from "@supabase/supabase-js";
-import { getSupabaseBrowserClient } from "../../lib/supabase";
-import type { Database } from "../../types/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import { useRoleRedirect } from "@/hooks/useRoleRedirect";
+import { getSupabaseBrowserClient } from "@/lib/supabase";
+import type { Database } from "@/types/supabase";
 
 type LoginFormProps = {
   supabaseConfigured: boolean;
@@ -40,18 +42,6 @@ const initialSignupState: SignUpFormState = {
   phone: "",
 };
 
-const resolveDashboardPath = (session: Session | null) => {
-  const appMetaRole =
-    (session?.user?.app_metadata as { role?: string } | undefined)?.role ??
-    (session?.user?.user_metadata as { role?: string } | undefined)?.role;
-
-  if (appMetaRole === "coach") {
-    return "/coach";
-  }
-
-  return "/client";
-};
-
 export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("login");
@@ -73,40 +63,12 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
     return getSupabaseBrowserClient();
   }, [supabaseConfigured]);
 
-  useEffect(() => {
-    if (!supabase) {
-      return;
-    }
-
-    let isMounted = true;
-
-    supabase.auth.getSession().then(({ data }) => {
-      if (!isMounted) {
-        return;
-      }
-
-      if (data.session) {
-        setIsRedirecting(true);
-        router.replace(resolveDashboardPath(data.session));
-      }
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        return;
-      }
-
-      setIsRedirecting(true);
-      router.replace(resolveDashboardPath(session));
-    });
-
-    return () => {
-      isMounted = false;
-      subscription.unsubscribe();
-    };
-  }, [router, supabase]);
+  const { handleRoleRedirect, isCheckingRole } = useRoleRedirect({
+    supabase,
+    enabled: Boolean(supabase),
+    onRedirectStart: () => setIsRedirecting(true),
+    onRedirectEnd: () => setIsRedirecting(false),
+  });
 
   useEffect(() => {
     setStatus(null);
@@ -157,7 +119,7 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
       return;
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: trimmedEmail,
       password: trimmedPassword,
     });
@@ -173,6 +135,8 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
       type: "success",
       message: "Signed in successfully. Redirecting you now…",
     });
+
+    void handleRoleRedirect(data.session, "password sign-in");
   };
 
   const handleForgotPassword = async () => {
@@ -312,6 +276,8 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
     );
   };
 
+  const isRoleRedirecting = isRedirecting || isCheckingRole;
+
   return (
     <section className="form-shell" aria-live="polite">
       <header>
@@ -340,7 +306,7 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
                 placeholder="you@triumph.com"
                 value={loginEmail}
                 onChange={(event) => setLoginEmail(event.target.value)}
-                disabled={isSubmitting || isRedirecting}
+                disabled={isSubmitting || isRoleRedirecting}
                 required
               />
             </div>
@@ -357,7 +323,7 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
                 placeholder="Enter your password"
                 value={loginPassword}
                 onChange={(event) => setLoginPassword(event.target.value)}
-                disabled={isSubmitting || isRedirecting}
+                disabled={isSubmitting || isRoleRedirecting}
                 required
               />
             </div>
@@ -367,7 +333,7 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
             type="button"
             className="form-secondary-link"
             onClick={handleForgotPassword}
-            disabled={isSubmitting || isSendingResetEmail || isRedirecting}
+            disabled={isSubmitting || isSendingResetEmail || isRoleRedirecting}
           >
             {isSendingResetEmail ? "Sending reset link…" : "Forgot password?"}
           </button>
@@ -375,7 +341,7 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
           <button
             type="submit"
             className="primary-button"
-            disabled={isSubmitting || isSendingResetEmail || isRedirecting}
+            disabled={isSubmitting || isSendingResetEmail || isRoleRedirecting}
           >
             {isSubmitting ? "Signing In" : "Sign In"}
           </button>
@@ -404,7 +370,7 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
                 placeholder="Jordan"
                 value={signupForm.firstName}
                 onChange={handleSignupChange("firstName")}
-                disabled={isSubmitting || isRedirecting}
+                disabled={isSubmitting || isRoleRedirecting}
                 required
               />
             </div>
@@ -421,7 +387,7 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
                 placeholder="Rivera"
                 value={signupForm.lastName}
                 onChange={handleSignupChange("lastName")}
-                disabled={isSubmitting || isRedirecting}
+                disabled={isSubmitting || isRoleRedirecting}
                 required
               />
             </div>
@@ -438,7 +404,7 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
                 placeholder="Triumph Studios"
                 value={signupForm.businessName}
                 onChange={handleSignupChange("businessName")}
-                disabled={isSubmitting || isRedirecting}
+                disabled={isSubmitting || isRoleRedirecting}
                 required
               />
             </div>
@@ -455,7 +421,7 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
                 placeholder="hello@business.com"
                 value={signupForm.email}
                 onChange={handleSignupChange("email")}
-                disabled={isSubmitting || isRedirecting}
+                disabled={isSubmitting || isRoleRedirecting}
                 required
               />
             </div>
@@ -472,7 +438,7 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
                 placeholder="(555) 123-4567"
                 value={signupForm.phone}
                 onChange={handleSignupChange("phone")}
-                disabled={isSubmitting || isRedirecting}
+                disabled={isSubmitting || isRoleRedirecting}
                 required
               />
             </div>
@@ -481,7 +447,7 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
           <button
             type="submit"
             className="primary-button"
-            disabled={isSubmitting || isRedirecting}
+            disabled={isSubmitting || isRoleRedirecting}
           >
             {isSubmitting ? "Submitting" : "Register"}
           </button>
@@ -511,7 +477,7 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
         </p>
       )}
 
-      {isRedirecting && (
+      {isRoleRedirecting && (
         <div className="redirecting-chip" role="status">
           <svg viewBox="0 0 24 24" aria-hidden="true" className="spin-icon">
             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.4" />

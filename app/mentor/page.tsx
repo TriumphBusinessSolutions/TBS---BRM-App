@@ -101,13 +101,13 @@ async function fetchClientsData() {
   return clientsWithRelations;
 }
 
-export default async function CoachPage() {
+export default async function MentorPage() {
   const clients = await fetchClientsData();
 
   return (
     <div className="space-y-8 p-6">
       <header className="space-y-2">
-        <h1 className="text-2xl font-bold">Coach/Admin — All Clients</h1>
+        <h1 className="text-2xl font-bold">Mentor/Admin — All Clients</h1>
         <p className="text-sm text-slate-500">
           Review client models, milestones, and KPIs. Use the filters below to
           focus the list.

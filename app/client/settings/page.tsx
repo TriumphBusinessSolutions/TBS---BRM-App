@@ -10,25 +10,6 @@ export const metadata: Metadata = {
 const sectionCardClasses =
   "relative overflow-hidden rounded-[32px] border border-white/10 bg-white/5 shadow-[0_45px_140px_rgba(1,9,30,0.45)] backdrop-blur";
 
-const backButton = (
-  <Link
-    href="/client"
-    className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-white shadow-[0_20px_60px_rgba(1,9,30,0.55)] transition hover:border-white/30 hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-  >
-    <svg
-      aria-hidden="true"
-      className="h-4 w-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-    </svg>
-    <span>Back to dashboard</span>
-  </Link>
-);
-
 const accountFields = [
   {
     label: "Primary email",
@@ -80,9 +61,24 @@ const workspacePreferences = [
   },
 ];
 
+const businessInformationActions = [
+  {
+    title: "Update business profile",
+    description: "Jump to the dashboard form to share offers, ICP details, and program notes.",
+    actionLabel: "Open profile",
+    href: "/client#business-profile",
+  },
+  {
+    title: "Share launch plans",
+    description: "Upload supporting docs or notes so mentors can plan proactive outreach.",
+    actionLabel: "Add resources",
+    href: "#",
+  },
+];
+
 export default function ClientSettingsPage() {
   return (
-    <ClientShell navSlot={backButton}>
+    <ClientShell>
       <section className={`${sectionCardClasses} px-8 py-12 md:px-12`}>
         <div className="pointer-events-none absolute inset-0 opacity-70">
           <div className="absolute -top-28 right-[-4rem] h-72 w-72 rounded-full bg-[#fa9100]/30 blur-[160px]" />
@@ -117,7 +113,7 @@ export default function ClientSettingsPage() {
         </div>
       </section>
 
-      <section className={`${sectionCardClasses} px-8 py-10`}>
+      <section id="personal-information" className={`${sectionCardClasses} px-8 py-10`}>
         <div className="pointer-events-none absolute inset-0 opacity-50">
           <div className="absolute -top-16 left-[-5rem] h-60 w-60 rounded-full bg-[#8fd6ff]/30 blur-[140px]" />
         </div>
@@ -143,6 +139,48 @@ export default function ClientSettingsPage() {
               </div>
             ))}
           </dl>
+        </div>
+      </section>
+
+      <section id="business-information" className={`${sectionCardClasses} px-8 py-10`}>
+        <div className="pointer-events-none absolute inset-0 opacity-50">
+          <div className="absolute -top-12 right-[-4rem] h-60 w-60 rounded-full bg-[#fa9100]/25 blur-[130px]" />
+        </div>
+        <div className="relative space-y-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/70">Business</p>
+              <h2 className="text-2xl font-semibold text-slate-50">Business information</h2>
+              <p className="mt-2 text-sm text-slate-300/80">
+                Keep the Triumph team aligned with your offers, launches, and positioning.
+              </p>
+            </div>
+            <Link
+              href="/client#model-generation"
+              className="inline-flex items-center justify-center rounded-full border border-white/20 px-5 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-white transition hover:border-white/35 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            >
+              View dashboard section
+            </Link>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {businessInformationActions.map((action) => (
+              <article
+                key={action.title}
+                className="flex h-full flex-col justify-between rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-slate-200 shadow-[0_25px_90px_rgba(1,9,30,0.4)]"
+              >
+                <div className="space-y-3">
+                  <h3 className="text-base font-semibold text-slate-100">{action.title}</h3>
+                  <p className="text-xs text-slate-300/80">{action.description}</p>
+                </div>
+                <Link
+                  href={action.href}
+                  className="mt-6 inline-flex items-center justify-center rounded-full border border-white/20 px-5 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-white transition hover:border-white/35 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                >
+                  {action.actionLabel}
+                </Link>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 

@@ -1,0 +1,21 @@
+.skeletonLayout {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.skeletonCard {
+  border-radius: var(--radius-lg);
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.16) 25%, rgba(148, 163, 184, 0.25) 50%, rgba(148, 163, 184, 0.16) 75%);
+  background-size: 240px 100%;
+  animation: shimmer 1.2s linear infinite;
+  height: 140px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -240px 0;
+  }
+  100% {
+    background-position: 240px 0;
+  }
+}

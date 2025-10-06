@@ -213,14 +213,8 @@ export default function BusinessProfileForm() {
   };
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-indigo-100 bg-white shadow-xl">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-24 -top-24 h-56 w-56 rounded-full bg-indigo-200/40 blur-3xl" aria-hidden />
-        <div className="absolute -right-20 -top-12 h-64 w-64 rounded-full bg-purple-200/50 blur-3xl" aria-hidden />
-        <div className="absolute inset-x-0 top-0 h-36 bg-gradient-to-r from-indigo-600/15 via-purple-600/10 to-rose-500/10" aria-hidden />
-      </div>
-
-      <div className="relative flex flex-col gap-6 px-8 py-10">
+    <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex flex-col gap-6 px-8 py-10">
         <div className="max-w-2xl space-y-3">
           <div className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700">
             Business Foundations

@@ -115,7 +115,7 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
       await new Promise((resolve) => setTimeout(resolve, 700));
       setIsSubmitting(false);
       setStatus({ type: "success", message: "Signed in! Preparing your dashboard…" });
-      scheduleRedirect("/dashboard", 500);
+      scheduleRedirect("/client", 500);
       return;
     }
 
@@ -219,7 +219,7 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
         type: "success",
         message: "Account created! Redirecting you to the dashboard.",
       });
-      scheduleRedirect("/dashboard");
+      scheduleRedirect("/client");
       return;
     }
 
@@ -241,7 +241,7 @@ export default function LoginForm({ supabaseConfigured }: LoginFormProps) {
     setSignupForm(initialSignupState);
     setStatus({ type: "success", message: "Account created! Redirecting you to the dashboard." });
 
-    scheduleRedirect("/dashboard");
+    scheduleRedirect("/client");
   };
 
   const switchTo = (nextMode: Mode) => {

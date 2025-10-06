@@ -11,12 +11,9 @@ export default function DashboardClient() {
     <div className="dashboard-shell">
       <div className="dashboard-inner">
         <header className="dashboard-header">
-          <div className="dashboard-brand">
-            <span className="brand-glyph">TB</span>
-            <div className="brand-title">
-              <span>Triumph dashboard</span>
-              <span>Business Revenue Model</span>
-            </div>
+          <div className="dashboard-heading">
+            <span className="dashboard-heading-kicker">Client workspace</span>
+            <h1 className="dashboard-heading-title">Business Revenue Model dashboard</h1>
           </div>
           <div className="header-actions">
             <button className="settings-button" type="button" aria-label="Open settings menu">

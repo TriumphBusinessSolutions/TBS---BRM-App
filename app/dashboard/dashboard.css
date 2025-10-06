@@ -75,40 +75,24 @@
   z-index: 1;
 }
 
-.dashboard-brand {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.brand-glyph {
-  width: 44px;
-  height: 44px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, #f59e0b, #ef4444);
-  box-shadow: 0 18px 45px rgba(251, 191, 36, 0.35);
-  display: grid;
-  place-items: center;
-  font-weight: 700;
-  font-size: 1.125rem;
-  letter-spacing: 0.08em;
-}
-
-.brand-title {
+.dashboard-heading {
   display: flex;
   flex-direction: column;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  gap: 0.35rem;
 }
 
-.brand-title span:first-child {
+.dashboard-heading-kicker {
   font-size: 0.75rem;
   text-transform: uppercase;
-  color: rgba(148, 163, 184, 0.85);
+  letter-spacing: 0.35em;
+  color: rgba(148, 163, 184, 0.75);
 }
 
-.brand-title span:last-child {
-  font-size: 1.5rem;
+.dashboard-heading-title {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   color: #f8fafc;
 }
 

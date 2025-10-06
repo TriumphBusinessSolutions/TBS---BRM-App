@@ -11,15 +11,11 @@ import { CogIcon } from "./icons";
 type DashboardHeaderProps = {
   navItems: NavItem[];
   activePath: string;
-  activeSection: string;
-  onSectionChange: (section: string) => void;
 };
 
 export default function DashboardHeader({
   navItems,
   activePath,
-  activeSection,
-  onSectionChange,
 }: DashboardHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -47,22 +43,22 @@ export default function DashboardHeader({
       </div>
       <nav className={styles.nav} aria-label="Primary">
         {navItems.map((item) => {
-          const normalizedHref = item.href.split("#")[0];
-          const isAnchor = item.href.includes("#");
-          const isActive = isAnchor
-            ? activeSection === item.href
-            : activePath === item.href || activePath === normalizedHref;
+          const normalizedHref = item.href.endsWith("/")
+            ? item.href.slice(0, -1)
+            : item.href;
+          const normalizedActivePath = activePath.endsWith("/")
+            ? activePath.slice(0, -1)
+            : activePath;
+          const matchesExact = normalizedActivePath === normalizedHref;
+          const matchesNested =
+            normalizedHref !== "/client" && normalizedActivePath.startsWith(`${normalizedHref}/`);
+          const isActive = matchesExact || matchesNested;
 
           return (
             <Link
               key={item.label}
               href={item.href}
               className={`${styles.navButton} ${isActive ? styles.navButtonActive : ""}`.trim()}
-              onClick={() => {
-                if (isAnchor) {
-                  onSectionChange(item.href);
-                }
-              }}
             >
               {item.label}
             </Link>

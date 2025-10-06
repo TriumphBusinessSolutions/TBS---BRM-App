@@ -156,7 +156,7 @@ export default function ClientSettingsPage() {
               </p>
             </div>
             <Link
-              href="/client#model-generation"
+              href="/client/model-generation"
               className="inline-flex items-center justify-center rounded-full border border-white/20 px-5 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-white transition hover:border-white/35 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
               View dashboard section

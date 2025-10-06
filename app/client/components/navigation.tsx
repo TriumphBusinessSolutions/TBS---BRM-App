@@ -19,19 +19,19 @@ export const navigationItems: NavItem[] = [
   {
     label: "Model Generation",
     description: "Shape strategies and build your growth models.",
-    href: "/client#model-generation",
+    href: "/client/model-generation",
     icon: <SparkleIcon />,
   },
   {
     label: "Model Implementation",
     description: "Track milestones and KPIs as you execute.",
-    href: "/client#model-implementation",
+    href: "/client/model-implementation",
     icon: <LayersIcon />,
   },
   {
     label: "Mentor Outreach",
     description: "Stay in sync with your Triumph mentor team.",
-    href: "/client#mentor-outreach",
+    href: "/client/mentor-outreach",
     icon: <UsersIcon />,
   },
 ];

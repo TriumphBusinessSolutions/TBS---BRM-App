@@ -10,7 +10,7 @@ import { navigationItems } from "./navigation";
 
 type ClientShellProps = {
   children: ReactNode;
-  activePath: string;
+  activePath?: string;
 };
 
 export default function ClientShell({ children, activePath }: ClientShellProps) {

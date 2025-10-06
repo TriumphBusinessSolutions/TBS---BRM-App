@@ -23,7 +23,7 @@ const LEVELS = [
     synonyms: ["level_2", "level2", "l2", "upsell", "upsell_model", "level 2"],
     prompts: [
       "Design an upsell path that bundles implementation support immediately after a course purchase.",
-      "Outline a premium coaching upgrade offer triggered after clients complete an onboarding checklist.",
+      "Outline a premium mentoring upgrade offer triggered after clients complete an onboarding checklist.",
       "Create a post-purchase mini-workshop that drives buyers into a higher-touch mastermind within 14 days.",
     ],
   },
@@ -363,7 +363,7 @@ export default async function ClientDashboardPage({ params }: PageProps) {
               >
                 <div className="space-y-1">
                   <h2 className="text-lg font-semibold">{level.label}</h2>
-                  <p className="text-sm">Locked — work with your coach to unlock this level.</p>
+                  <p className="text-sm">Locked — work with your mentor to unlock this level.</p>
                 </div>
                 <p className="text-xs uppercase tracking-wide">Model generator locked</p>
               </article>

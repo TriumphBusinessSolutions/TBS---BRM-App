@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { getSupabaseBrowserClient } from "../lib/supabase";
@@ -14,6 +14,8 @@ type BusinessInfoFormProps = {
   initialContext: BusinessContextRow | null;
   initialOffers: OfferStackRow[];
   onSuccess?: () => void;
+  activeClientId?: string | null;
+  activeClientName?: string | null;
 };
 
 type OfferFormState = {
@@ -173,6 +175,13 @@ const offerTitleMap: Record<OfferFormState["slot"], string> = {
   3: "Entry pathway",
 };
 
+const ACTIVE_CLIENT_STORAGE_KEY = "tbs-active-client";
+
+type ActiveClientContext = {
+  id: string | null;
+  name: string | null;
+};
+
 function classNames(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(" ");
 }
@@ -202,9 +211,94 @@ const fieldLabelClasses = "text-sm font-semibold text-slate-900";
 const fieldErrorClasses = "text-sm text-rose-500";
 const subheadingClasses = "text-sm font-medium uppercase tracking-[0.2em] text-indigo-500";
 
-export default function BusinessInfoForm({ brmLevel, initialContext, initialOffers, onSuccess }: BusinessInfoFormProps) {
+export default function BusinessInfoForm({
+  brmLevel,
+  initialContext,
+  initialOffers,
+  onSuccess,
+  activeClientId = null,
+  activeClientName = null,
+}: BusinessInfoFormProps) {
   const router = useRouter();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
+
+  const [clientContext, setClientContext] = useState<ActiveClientContext>(() => ({
+    id: activeClientId,
+    name: activeClientName,
+  }));
+
+  const hasClientContext = Boolean(
+    (clientContext.id && clientContext.id.length > 0) ||
+      (clientContext.name && clientContext.name.length > 0),
+  );
+
+  useEffect(() => {
+    setClientContext((previous) => {
+      if (previous.id === activeClientId && previous.name === activeClientName) {
+        return previous;
+      }
+
+      return {
+        id: activeClientId,
+        name: activeClientName,
+      };
+    });
+  }, [activeClientId, activeClientName]);
+
+  useEffect(() => {
+    if (!hasClientContext) {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(
+        ACTIVE_CLIENT_STORAGE_KEY,
+        JSON.stringify({ id: clientContext.id, name: clientContext.name }),
+      );
+    } catch (error) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("Unable to persist active client context", error);
+      }
+    }
+  }, [clientContext, hasClientContext]);
+
+  useEffect(() => {
+    if (hasClientContext) {
+      return;
+    }
+
+    try {
+      const stored = window.localStorage.getItem(ACTIVE_CLIENT_STORAGE_KEY);
+
+      if (!stored) {
+        return;
+      }
+
+      const parsed: unknown = JSON.parse(stored);
+
+      if (typeof parsed !== "object" || parsed === null) {
+        return;
+      }
+
+      const maybeContext = parsed as Partial<ActiveClientContext>;
+
+      setClientContext({
+        id: typeof maybeContext.id === "string" ? maybeContext.id : null,
+        name: typeof maybeContext.name === "string" ? maybeContext.name : null,
+      });
+    } catch (error) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("Unable to restore active client context", error);
+      }
+    }
+  }, [hasClientContext]);
+
+  const clientDisplayName =
+    clientContext.name && clientContext.name.trim().length > 0
+      ? clientContext.name.trim()
+      : clientContext.id && clientContext.id.trim().length > 0
+        ? clientContext.id.trim()
+        : null;
 
   const [offerType, setOfferType] = useState<BusinessContextRow["offer_type"] | "">(initialContext?.offer_type ?? "");
   const [corePromise, setCorePromise] = useState(initialContext?.core_promise ?? "");
@@ -355,6 +449,12 @@ export default function BusinessInfoForm({ brmLevel, initialContext, initialOffe
             <span className="flex h-1.5 w-1.5 rounded-full bg-indigo-500" aria-hidden />
             BRM LEVEL · {brmLevelLabels[brmLevel]} · {brmLevelDescriptions[brmLevel]}
           </span>
+          {clientDisplayName ? (
+            <span className="inline-flex items-center gap-2 rounded-full border border-amber-200/70 bg-white/95 px-4 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-amber-600 shadow-sm">
+              <span className="inline-flex h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden />
+              Active Client · <span className="text-slate-900 tracking-[0.16em]">{clientDisplayName}</span>
+            </span>
+          ) : null}
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.4em] text-slate-400">Title:</p>
             <h1 className="text-3xl font-semibold text-slate-900">Business Profile</h1>

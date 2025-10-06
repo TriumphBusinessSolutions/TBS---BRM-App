@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import BusinessInfoForm from "../../../components/BusinessInfoForm";
 import { getServerClient } from "../../../lib/supabase-server";
@@ -51,12 +52,19 @@ export default async function BusinessInfoSettingsPage() {
     ((user.user_metadata as { brm_level?: Database["public"]["Enums"]["brm_level"] } | undefined)?.brm_level ??
       BRM_LEVEL_FALLBACK);
 
+  const cookieStore = cookies();
+  const activeClientId = cookieStore.get("active_client_id")?.value ?? null;
+  const activeClientNameCookie = cookieStore.get("active_client_name")?.value ?? null;
+  const activeClientName = activeClientNameCookie ? decodeURIComponent(activeClientNameCookie) : null;
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 px-4 py-12">
       <BusinessInfoForm
         brmLevel={brmLevel}
         initialContext={contextData ?? null}
         initialOffers={offerData ?? []}
+        activeClientId={activeClientId}
+        activeClientName={activeClientName}
       />
     </main>
   );

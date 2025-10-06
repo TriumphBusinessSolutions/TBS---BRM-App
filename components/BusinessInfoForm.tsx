@@ -13,6 +13,7 @@ type BusinessInfoFormProps = {
   brmLevel: Database["public"]["Enums"]["brm_level"];
   initialContext: BusinessContextRow | null;
   initialOffers: OfferStackRow[];
+  onSuccess?: () => void;
 };
 
 type OfferFormState = {
@@ -166,6 +167,12 @@ function toCurrencyPlaceholder(slot: number) {
   return "e.g. 497";
 }
 
+const offerTitleMap: Record<OfferFormState["slot"], string> = {
+  1: "Flagship offer",
+  2: "Signature companion",
+  3: "Entry pathway",
+};
+
 function classNames(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(" ");
 }
@@ -188,7 +195,14 @@ function parseNumberInput(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-export default function BusinessInfoForm({ brmLevel, initialContext, initialOffers }: BusinessInfoFormProps) {
+const baseControlClasses =
+  "w-full rounded-2xl border border-slate-200/70 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-300/50 placeholder:text-slate-400";
+const errorControlClasses = "border-rose-400 focus:border-rose-400 focus:ring-rose-200/70";
+const fieldLabelClasses = "text-sm font-semibold text-slate-900";
+const fieldErrorClasses = "text-sm text-rose-500";
+const subheadingClasses = "text-sm font-medium uppercase tracking-[0.2em] text-indigo-500";
+
+export default function BusinessInfoForm({ brmLevel, initialContext, initialOffers, onSuccess }: BusinessInfoFormProps) {
   const router = useRouter();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
 
@@ -324,132 +338,142 @@ export default function BusinessInfoForm({ brmLevel, initialContext, initialOffe
       return;
     }
 
-    router.push("/dashboard");
+    if (onSuccess) {
+      onSuccess();
+    } else {
+      router.push("/dashboard");
+    }
   };
 
   const corePromiseCharactersRemaining = Math.max(120 - corePromise.trim().length, 0);
 
   return (
-    <section className="mx-auto w-full max-w-5xl">
-      <div className="mb-10 flex flex-col gap-4 text-center">
-        <span className="mx-auto inline-flex items-center gap-2 rounded-full bg-indigo-100 px-4 py-1 text-sm font-medium text-indigo-700">
-          <span className="flex h-2 w-2 rounded-full bg-indigo-500" aria-hidden />
-          BRM Level: {brmLevelLabels[brmLevel]}
-          <span className="text-xs font-normal text-indigo-500">{brmLevelDescriptions[brmLevel]}</span>
-        </span>
-        <div className="space-y-3">
-          <h1 className="text-3xl font-semibold text-slate-900">Calibrate Your BRM Workspace</h1>
-          <p className="mx-auto max-w-2xl text-base text-slate-600">
-            This snapshot personalizes model ideas and checklists to your current level. Share how your business delivers results so your Mentor and Triumph resources stay tuned to your growth.
-          </p>
-        </div>
-      </div>
-
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-10 rounded-3xl bg-white/90 p-8 shadow-xl ring-1 ring-slate-200 backdrop-blur"
-      >
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="rounded-2xl border border-indigo-100 bg-indigo-50/70 p-6">
-            <h2 className="text-lg font-semibold text-indigo-900">Business snapshot</h2>
-            <p className="mt-1 text-sm text-indigo-700/80">
-              Anchor your Triumph workspace with how you serve clients today.
+    <section className="mx-auto w-full max-w-4xl">
+      <div className="relative overflow-hidden rounded-[40px] border border-slate-200/70 bg-white/98 px-6 py-10 shadow-[0_45px_120px_rgba(15,23,42,0.35)] backdrop-blur-xl sm:px-10 sm:py-12">
+        <div className="flex flex-col items-center gap-5 text-center">
+          <span className="inline-flex items-center gap-3 rounded-full border border-indigo-200/70 bg-white/95 px-5 py-1.5 text-xs font-semibold uppercase tracking-[0.3em] text-indigo-500 shadow-sm">
+            <span className="flex h-1.5 w-1.5 rounded-full bg-indigo-500" aria-hidden />
+            BRM LEVEL · {brmLevelLabels[brmLevel]} · {brmLevelDescriptions[brmLevel]}
+          </span>
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.4em] text-slate-400">Title:</p>
+            <h1 className="text-3xl font-semibold text-slate-900">Business Profile</h1>
+            <p className="text-base text-slate-600">
+              Please fill out this profile to allow the system to provide you with the most accurate plans, models, and more.
             </p>
-            <div className="mt-6 space-y-5">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-indigo-900" htmlFor="offer_type">
-                  Type of business
-                </label>
-                <select
-                  id="offer_type"
-                  name="offer_type"
-                  className={classNames(
-                    "w-full rounded-xl border border-indigo-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/60",
-                    fieldErrors["offer_type"] && "border-rose-400 focus:border-rose-400 focus:ring-rose-200",
-                  )}
-                  value={offerType}
-                  onChange={(event) => setOfferType(event.target.value as typeof offerType)}
-                  required
-                >
-                  <option value="" disabled>
-                    Select your business model
-                  </option>
-                  {offerTypes.map((value) => (
-                    <option key={value} value={value}>
-                      {formatEnumLabel(value)}
-                    </option>
-                  ))}
-                </select>
-                {fieldErrors["offer_type"] ? (
-                  <p className="text-sm text-rose-500">{fieldErrors["offer_type"]}</p>
-                ) : null}
-              </div>
+            <p className="text-sm text-slate-500">You can return and edit this profile at anytime in your profile settings.</p>
+          </div>
+        </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <label className="font-medium text-indigo-900" htmlFor="core_promise">
-                    Core promise
+        <form onSubmit={handleSubmit} className="mt-10 space-y-12">
+            <section className="grid gap-8 lg:grid-cols-[minmax(0,2.1fr)_minmax(0,3fr)]">
+            <div className="rounded-[28px] border border-indigo-100/70 bg-gradient-to-br from-indigo-50 via-white to-indigo-100 p-8 shadow-inner">
+              <span className={subheadingClasses}>Business snapshot</span>
+              <h2 className="mt-3 text-2xl font-semibold text-slate-900">Anchor your current model</h2>
+              <p className="mt-3 text-sm text-slate-600">
+                Capture the essentials of how you deliver and monetize today so Triumph can personalize dashboards, resources, and
+                Mentor recommendations.
+              </p>
+              <ul className="mt-6 space-y-2 text-left text-sm text-slate-600">
+                <li className="flex items-start gap-2">
+                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-indigo-400" aria-hidden />
+                  Confirm your primary offer type and positioning.
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-indigo-400" aria-hidden />
+                  Share the economics behind your flagship experiences.
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-indigo-400" aria-hidden />
+                  Highlight the lead sources bringing buyers to you today.
+                </li>
+              </ul>
+            </div>
+
+            <div className="grid gap-6">
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div className="sm:col-span-2 space-y-2">
+                  <label className={fieldLabelClasses} htmlFor="offer_type">
+                    Type of business
                   </label>
-                  <span className="text-xs text-indigo-700/70">{corePromiseCharactersRemaining} characters left</span>
+                  <select
+                    id="offer_type"
+                    name="offer_type"
+                    className={classNames(baseControlClasses, fieldErrors["offer_type"] && errorControlClasses)}
+                    value={offerType}
+                    onChange={(event) => setOfferType(event.target.value as typeof offerType)}
+                    required
+                  >
+                    <option value="" disabled>
+                      Select your business model
+                    </option>
+                    {offerTypes.map((value) => (
+                      <option key={value} value={value}>
+                        {formatEnumLabel(value)}
+                      </option>
+                    ))}
+                  </select>
+                  {fieldErrors["offer_type"] ? <p className={fieldErrorClasses}>{fieldErrors["offer_type"]}</p> : null}
                 </div>
-                <input
-                  id="core_promise"
-                  name="core_promise"
-                  type="text"
-                  maxLength={120}
-                  placeholder="We help ___ achieve ___ in ___."
-                  className={classNames(
-                    "w-full rounded-xl border border-indigo-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/60",
-                    fieldErrors["core_promise"] && "border-rose-400 focus:border-rose-400 focus:ring-rose-200",
-                  )}
-                  value={corePromise}
-                  onChange={(event) => setCorePromise(event.target.value)}
-                  required
-                />
-                {fieldErrors["core_promise"] ? (
-                  <p className="text-sm text-rose-500">{fieldErrors["core_promise"]}</p>
-                ) : null}
-              </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-indigo-900" htmlFor="avg_txn_value">
-                  Average transaction value
-                </label>
-                <div className="relative">
-                  <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-slate-400">$
-                  </span>
+                <div className="sm:col-span-2 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className={fieldLabelClasses} htmlFor="core_promise">
+                      Core promise
+                    </label>
+                    <span className="text-xs font-medium text-indigo-500/80">
+                      {corePromiseCharactersRemaining} characters left
+                    </span>
+                  </div>
                   <input
-                    id="avg_txn_value"
-                    name="avg_txn_value"
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    inputMode="decimal"
-                    className={classNames(
-                      "w-full rounded-xl border border-indigo-200 bg-white px-3 py-2 pl-7 text-sm text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/60",
-                      fieldErrors["avg_txn_value"] && "border-rose-400 focus:border-rose-400 focus:ring-rose-200",
-                    )}
-                    value={avgTransactionValue}
-                    onChange={(event) => setAvgTransactionValue(event.target.value)}
+                    id="core_promise"
+                    name="core_promise"
+                    type="text"
+                    maxLength={120}
+                    placeholder="We help ___ achieve ___ in ___."
+                    className={classNames(baseControlClasses, fieldErrors["core_promise"] && errorControlClasses)}
+                    value={corePromise}
+                    onChange={(event) => setCorePromise(event.target.value)}
+                    required
                   />
+                  {fieldErrors["core_promise"] ? <p className={fieldErrorClasses}>{fieldErrors["core_promise"]}</p> : null}
                 </div>
-                {fieldErrors["avg_txn_value"] ? (
-                  <p className="text-sm text-rose-500">{fieldErrors["avg_txn_value"]}</p>
-                ) : null}
-              </div>
 
-              <div className="grid gap-5 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-indigo-900" htmlFor="revenue_band">
+                  <label className={fieldLabelClasses} htmlFor="avg_txn_value">
+                    Average transaction value
+                  </label>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm font-semibold text-slate-400">
+                      $
+                    </span>
+                    <input
+                      id="avg_txn_value"
+                      name="avg_txn_value"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      inputMode="decimal"
+                      className={classNames(
+                        baseControlClasses,
+                        "pl-8",
+                        fieldErrors["avg_txn_value"] && errorControlClasses,
+                      )}
+                      value={avgTransactionValue}
+                      onChange={(event) => setAvgTransactionValue(event.target.value)}
+                    />
+                  </div>
+                  {fieldErrors["avg_txn_value"] ? <p className={fieldErrorClasses}>{fieldErrors["avg_txn_value"]}</p> : null}
+                </div>
+
+                <div className="space-y-2">
+                  <label className={fieldLabelClasses} htmlFor="revenue_band">
                     Annual revenue band
                   </label>
                   <select
                     id="revenue_band"
                     name="revenue_band"
-                    className={classNames(
-                      "w-full rounded-xl border border-indigo-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/60",
-                      fieldErrors["revenue_band"] && "border-rose-400 focus:border-rose-400 focus:ring-rose-200",
-                    )}
+                    className={classNames(baseControlClasses, fieldErrors["revenue_band"] && errorControlClasses)}
                     value={revenueBand}
                     onChange={(event) => setRevenueBand(event.target.value as typeof revenueBand)}
                     required
@@ -463,22 +487,17 @@ export default function BusinessInfoForm({ brmLevel, initialContext, initialOffe
                       </option>
                     ))}
                   </select>
-                  {fieldErrors["revenue_band"] ? (
-                    <p className="text-sm text-rose-500">{fieldErrors["revenue_band"]}</p>
-                  ) : null}
+                  {fieldErrors["revenue_band"] ? <p className={fieldErrorClasses}>{fieldErrors["revenue_band"]}</p> : null}
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-indigo-900" htmlFor="traffic_source">
+                  <label className={fieldLabelClasses} htmlFor="traffic_source">
                     Primary traffic source
                   </label>
                   <select
                     id="traffic_source"
                     name="traffic_source"
-                    className={classNames(
-                      "w-full rounded-xl border border-indigo-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/60",
-                      fieldErrors["traffic_source"] && "border-rose-400 focus:border-rose-400 focus:ring-rose-200",
-                    )}
+                    className={classNames(baseControlClasses, fieldErrors["traffic_source"] && errorControlClasses)}
                     value={trafficSource ?? ""}
                     onChange={(event) => setTrafficSource(event.target.value as typeof trafficSource)}
                   >
@@ -489,38 +508,48 @@ export default function BusinessInfoForm({ brmLevel, initialContext, initialOffe
                       </option>
                     ))}
                   </select>
-                  {fieldErrors["traffic_source"] ? (
-                    <p className="text-sm text-rose-500">{fieldErrors["traffic_source"]}</p>
-                  ) : null}
+                  {fieldErrors["traffic_source"] ? <p className={fieldErrorClasses}>{fieldErrors["traffic_source"]}</p> : null}
                 </div>
               </div>
             </div>
-          </div>
+          </section>
 
-          <div className="rounded-2xl border border-purple-100 bg-gradient-to-br from-purple-50 via-white to-purple-100 p-6">
-            <h2 className="text-lg font-semibold text-purple-900">Top services & programs</h2>
-            <p className="mt-1 text-sm text-purple-800/80">
-              Capture the three offers you lead with most often. Each can be activated in future playbooks individually or together.
-            </p>
-            <div className="mt-6 space-y-6">
+          <section className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+            <div className="rounded-[28px] border border-purple-100/70 bg-gradient-to-br from-purple-50 via-white to-purple-100 p-8 shadow-inner">
+              <span className={classNames(subheadingClasses, "text-purple-500")}>Offers & delivery</span>
+              <h2 className="mt-3 text-2xl font-semibold text-slate-900">Showcase your lead offers</h2>
+              <p className="mt-3 text-sm text-slate-600">
+                Listing your three most important offers helps us tailor conversion playbooks, fulfillment guidance, and revenue
+                layering recommendations.
+              </p>
+              <p className="mt-4 rounded-2xl border border-purple-200/60 bg-white/70 px-4 py-3 text-xs text-purple-700">
+                <strong className="font-semibold">Tip:</strong> The flagship offer in slot 1 is required. Supporting and entry
+                offers are optional but provide richer recommendations.
+              </p>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-3">
               {offers.map((offer) => {
                 const slotPath = `offers.${offer.slot - 1}.name`;
                 const pricePath = `offers.${offer.slot - 1}.price_point`;
                 const fulfillmentPath = `offers.${offer.slot - 1}.fulfillment_type`;
                 const outcomePath = `offers.${offer.slot - 1}.primary_outcome`;
                 return (
-                  <div key={offer.slot} className="rounded-2xl bg-white/70 p-5 shadow-sm ring-1 ring-purple-200/70">
-                    <div className="flex items-center justify-between">
-                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-purple-600 text-sm font-semibold text-white">
-                        {offer.slot}
-                      </span>
+                  <div
+                    key={offer.slot}
+                    className="flex flex-col gap-5 rounded-[26px] border border-purple-200/60 bg-white/95 p-6 shadow-[0_18px_38px_rgba(126,58,242,0.08)]"
+                  >
+                    <header className="space-y-1">
+                      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-purple-500">Offer {offer.slot}</span>
+                      <h3 className="text-base font-semibold text-slate-900">{offerTitleMap[offer.slot]}</h3>
                       {fieldErrors[slotPath] ? (
-                        <span className="text-sm font-medium text-rose-500">{fieldErrors[slotPath]}</span>
+                        <p className="text-sm font-medium text-rose-500">{fieldErrors[slotPath]}</p>
                       ) : null}
-                    </div>
-                    <div className="mt-4 space-y-4">
+                    </header>
+
+                    <div className="space-y-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-purple-900" htmlFor={`offer-name-${offer.slot}`}>
+                        <label className={fieldLabelClasses} htmlFor={`offer-name-${offer.slot}`}>
                           Offer name
                         </label>
                         <input
@@ -528,229 +557,221 @@ export default function BusinessInfoForm({ brmLevel, initialContext, initialOffe
                           name={`offers[${offer.slot}].name`}
                           type="text"
                           placeholder={offer.slot === 1 ? "Flagship program" : "Companion offer"}
-                          className={classNames(
-                            "w-full rounded-xl border border-purple-200 px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-300/60",
-                            fieldErrors[slotPath] && "border-rose-400 focus:border-rose-400 focus:ring-rose-200",
-                          )}
+                          className={classNames(baseControlClasses, fieldErrors[slotPath] && errorControlClasses)}
                           value={offer.name}
                           onChange={(event) => handleOfferChange(offer.slot, "name", event.target.value)}
                           required={offer.slot === 1}
                         />
                       </div>
 
-                      <details className="group rounded-xl border border-purple-100 bg-purple-50/40 p-4">
-                        <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-purple-800">
-                          Details
-                          <span className="text-xs text-purple-500 group-open:hidden">Tap to expand</span>
-                          <span className="hidden text-xs text-purple-500 group-open:inline">Tap to collapse</span>
-                        </summary>
-                        <div className="mt-4 space-y-4 text-sm">
-                          <div className="space-y-1">
-                            <label className="text-purple-900" htmlFor={`offer-price-${offer.slot}`}>
-                              Price point
-                            </label>
-                            <div className="relative">
-                              <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">$
-                              </span>
-                              <input
-                                id={`offer-price-${offer.slot}`}
-                                name={`offers[${offer.slot}].price_point`}
-                                type="number"
-                                min={0}
-                                step="0.01"
-                                inputMode="decimal"
-                                placeholder={toCurrencyPlaceholder(offer.slot)}
-                                className={classNames(
-                                  "w-full rounded-lg border border-purple-200 bg-white px-3 py-2 pl-7 text-sm text-slate-900 shadow-sm transition focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-300/60",
-                                  fieldErrors[pricePath] && "border-rose-400 focus:border-rose-400 focus:ring-rose-200",
-                                )}
-                                value={offer.price_point}
-                                onChange={(event) => handleOfferChange(offer.slot, "price_point", event.target.value)}
-                              />
-                            </div>
-                            {fieldErrors[pricePath] ? (
-                              <p className="text-xs text-rose-500">{fieldErrors[pricePath]}</p>
-                            ) : null}
-                          </div>
-
-                          <div className="space-y-1">
-                            <label className="text-purple-900" htmlFor={`offer-fulfillment-${offer.slot}`}>
-                              Fulfillment style
-                            </label>
-                            <select
-                              id={`offer-fulfillment-${offer.slot}`}
-                              name={`offers[${offer.slot}].fulfillment_type`}
-                              className={classNames(
-                                "w-full rounded-lg border border-purple-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-300/60",
-                                fieldErrors[fulfillmentPath] && "border-rose-400 focus:border-rose-400 focus:ring-rose-200",
-                              )}
-                              value={offer.fulfillment_type}
-                              onChange={(event) =>
-                                handleOfferChange(offer.slot, "fulfillment_type", event.target.value as OfferFormState["fulfillment_type"])
-                              }
-                            >
-                              <option value="">Select</option>
-                              {fulfillmentTypes.map((value) => (
-                                <option key={value} value={value}>
-                                  {formatEnumLabel(value)}
-                                </option>
-                              ))}
-                            </select>
-                            {fieldErrors[fulfillmentPath] ? (
-                              <p className="text-xs text-rose-500">{fieldErrors[fulfillmentPath]}</p>
-                            ) : null}
-                          </div>
-
-                          <div className="space-y-1">
-                            <label className="text-purple-900" htmlFor={`offer-outcome-${offer.slot}`}>
-                              Primary outcome <span className="text-xs text-purple-500">(80 characters)</span>
-                            </label>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <label className={fieldLabelClasses} htmlFor={`offer-price-${offer.slot}`}>
+                            Price point
+                          </label>
+                          <div className="relative">
+                            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm font-semibold text-slate-400">
+                              $
+                            </span>
                             <input
-                              id={`offer-outcome-${offer.slot}`}
-                              name={`offers[${offer.slot}].primary_outcome`}
-                              type="text"
-                              maxLength={80}
-                              placeholder="What transformation does this offer deliver?"
+                              id={`offer-price-${offer.slot}`}
+                              name={`offers[${offer.slot}].price_point`}
+                              type="number"
+                              min={0}
+                              step="0.01"
+                              inputMode="decimal"
+                              placeholder={toCurrencyPlaceholder(offer.slot)}
                               className={classNames(
-                                "w-full rounded-lg border border-purple-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-300/60",
-                                fieldErrors[outcomePath] && "border-rose-400 focus:border-rose-400 focus:ring-rose-200",
+                                baseControlClasses,
+                                "pl-8",
+                                fieldErrors[pricePath] && errorControlClasses,
                               )}
-                              value={offer.primary_outcome}
-                              onChange={(event) => handleOfferChange(offer.slot, "primary_outcome", event.target.value)}
+                              value={offer.price_point}
+                              onChange={(event) => handleOfferChange(offer.slot, "price_point", event.target.value)}
                             />
-                            {fieldErrors[outcomePath] ? (
-                              <p className="text-xs text-rose-500">{fieldErrors[outcomePath]}</p>
-                            ) : null}
                           </div>
+                          {fieldErrors[pricePath] ? (
+                            <p className="text-xs text-rose-500">{fieldErrors[pricePath]}</p>
+                          ) : null}
                         </div>
-                      </details>
+
+                        <div className="space-y-2">
+                          <label className={fieldLabelClasses} htmlFor={`offer-fulfillment-${offer.slot}`}>
+                            Fulfillment style
+                          </label>
+                          <select
+                            id={`offer-fulfillment-${offer.slot}`}
+                            name={`offers[${offer.slot}].fulfillment_type`}
+                            className={classNames(baseControlClasses, fieldErrors[fulfillmentPath] && errorControlClasses)}
+                            value={offer.fulfillment_type}
+                            onChange={(event) =>
+                              handleOfferChange(
+                                offer.slot,
+                                "fulfillment_type",
+                                event.target.value as OfferFormState["fulfillment_type"],
+                              )
+                            }
+                          >
+                            <option value="">Select</option>
+                            {fulfillmentTypes.map((value) => (
+                              <option key={value} value={value}>
+                                {formatEnumLabel(value)}
+                              </option>
+                            ))}
+                          </select>
+                          {fieldErrors[fulfillmentPath] ? (
+                            <p className="text-xs text-rose-500">{fieldErrors[fulfillmentPath]}</p>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className={fieldLabelClasses} htmlFor={`offer-outcome-${offer.slot}`}>
+                          Primary outcome <span className="font-normal text-xs text-slate-500">(80 characters)</span>
+                        </label>
+                        <input
+                          id={`offer-outcome-${offer.slot}`}
+                          name={`offers[${offer.slot}].primary_outcome`}
+                          type="text"
+                          maxLength={80}
+                          placeholder="What transformation does this offer deliver?"
+                          className={classNames(baseControlClasses, fieldErrors[outcomePath] && errorControlClasses)}
+                          value={offer.primary_outcome}
+                          onChange={(event) => handleOfferChange(offer.slot, "primary_outcome", event.target.value)}
+                        />
+                        {fieldErrors[outcomePath] ? (
+                          <p className="text-xs text-rose-500">{fieldErrors[outcomePath]}</p>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
-        </div>
+          </section>
 
-        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-6">
-          <h2 className="text-lg font-semibold text-slate-900">Customer journey seeds</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Map how clients stay in your world so Mentors can recommend next steps.
-          </p>
-          <div className="mt-6 grid gap-5 md:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-900" htmlFor="retention_model">
-                Retention model
-              </label>
-              <select
-                id="retention_model"
-                name="retention_model"
-                className={classNames(
-                  "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/60",
-                  fieldErrors["retention_model"] && "border-rose-400 focus:border-rose-400 focus:ring-rose-200",
-                )}
-                value={retentionModel ?? ""}
-                onChange={(event) => setRetentionModel(event.target.value as typeof retentionModel)}
-              >
-                <option value="">Select retention style</option>
-                {retentionModels.map((value) => (
-                  <option key={value} value={value}>
-                    {formatEnumLabel(value)}
-                  </option>
-                ))}
-              </select>
+          <section className="grid gap-8 lg:grid-cols-[minmax(0,2.1fr)_minmax(0,3fr)]">
+            <div className="rounded-[28px] border border-slate-200/60 bg-gradient-to-br from-slate-50 via-white to-slate-100 p-8 shadow-inner">
+              <span className={classNames(subheadingClasses, "text-slate-500")}>Customer journey</span>
+              <h2 className="mt-3 text-2xl font-semibold text-slate-900">Clarify how clients stay engaged</h2>
+              <p className="mt-3 text-sm text-slate-600">
+                Detail retention structures and upsell paths to surface automation, nurture, and loyalty plays aligned to your
+                current systems.
+              </p>
             </div>
 
-            <div className="space-y-2">
-              <span className="text-sm font-medium text-slate-900">Do you offer upsells or downsells?</span>
-              <label className="flex w-max items-center gap-3 rounded-full bg-white px-4 py-2 shadow-sm ring-1 ring-slate-200">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                  checked={hasUpsells}
-                  onChange={(event) => setHasUpsells(event.target.checked)}
-                />
-                <span className="text-sm text-slate-700">Yes, include upsells</span>
-              </label>
+            <div className="grid gap-6">
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <label className={fieldLabelClasses} htmlFor="retention_model">
+                    Retention model
+                  </label>
+                  <select
+                    id="retention_model"
+                    name="retention_model"
+                    className={classNames(baseControlClasses, fieldErrors["retention_model"] && errorControlClasses)}
+                    value={retentionModel ?? ""}
+                    onChange={(event) => setRetentionModel(event.target.value as typeof retentionModel)}
+                  >
+                    <option value="">Select retention style</option>
+                    {retentionModels.map((value) => (
+                      <option key={value} value={value}>
+                        {formatEnumLabel(value)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <span className={fieldLabelClasses}>Do you offer upsells or downsells?</span>
+                  <label className="inline-flex items-center gap-3 rounded-full border border-slate-200/70 bg-white px-5 py-2.5 text-sm font-medium text-slate-600 shadow-sm transition hover:border-indigo-300">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      checked={hasUpsells}
+                      onChange={(event) => setHasUpsells(event.target.checked)}
+                    />
+                    <span>Yes, include upsells</span>
+                  </label>
+                </div>
+              </div>
+
+              {hasUpsells ? (
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className={fieldLabelClasses} htmlFor="upsell_name">
+                      Existing upsell/downsell name
+                    </label>
+                    <input
+                      id="upsell_name"
+                      name="upsell_name"
+                      type="text"
+                      className={baseControlClasses}
+                      value={upsellName}
+                      onChange={(event) => setUpsellName(event.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className={fieldLabelClasses} htmlFor="upsell_timing">
+                      When is it offered?
+                    </label>
+                    <input
+                      id="upsell_timing"
+                      name="upsell_timing"
+                      type="text"
+                      className={baseControlClasses}
+                      value={upsellTiming}
+                      onChange={(event) => setUpsellTiming(event.target.value)}
+                    />
+                  </div>
+                </div>
+              ) : null}
             </div>
-          </div>
+          </section>
 
-          {hasUpsells ? (
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-900" htmlFor="upsell_name">
-                  Existing upsell/downsell name
-                </label>
-                <input
-                  id="upsell_name"
-                  name="upsell_name"
-                  type="text"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/60"
-                  value={upsellName}
-                  onChange={(event) => setUpsellName(event.target.value)}
-                />
-              </div>
+          <section className="rounded-[28px] border border-slate-200/70 bg-slate-50/70 p-8">
+            <span className={classNames(subheadingClasses, "text-slate-500")}>Mentor alignment</span>
+            <h2 className="mt-3 text-2xl font-semibold text-slate-900">Mentor notes &amp; momentum markers</h2>
+            <p className="mt-3 text-sm text-slate-600">
+              Share current wins, upcoming milestones, and support requests so your Mentor can tailor the next session.
+            </p>
+            <div className="mt-6 space-y-2">
+              <label className={fieldLabelClasses} htmlFor="notes">
+                Notes
+              </label>
+              <textarea
+                id="notes"
+                name="notes"
+                rows={5}
+                placeholder="Mentor notes, goals, milestones, targets (30–90 days)"
+                className={classNames(baseControlClasses, fieldErrors["notes"] && errorControlClasses, "resize-none")}
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+              />
+            </div>
+          </section>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-900" htmlFor="upsell_timing">
-                  When is it offered?
-                </label>
-                <input
-                  id="upsell_timing"
-                  name="upsell_timing"
-                  type="text"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/60"
-                  value={upsellTiming}
-                  onChange={(event) => setUpsellTiming(event.target.value)}
-                />
-              </div>
+          {submissionError ? (
+            <div className="rounded-2xl border border-rose-200/70 bg-rose-50/80 px-5 py-4 text-sm font-medium text-rose-600">
+              {submissionError}
             </div>
           ) : null}
-        </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <h2 className="text-lg font-semibold text-slate-900">Mentor notes & momentum markers</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Capture wins, goals, or what you want your Mentor to spotlight over the next 30–90 days.
-          </p>
-          <div className="mt-4 space-y-2">
-            <label className="text-sm font-medium text-slate-900" htmlFor="notes">
-              Notes
-            </label>
-            <textarea
-              id="notes"
-              name="notes"
-              rows={5}
-              placeholder="Mentor notes, goals, milestones, targets (30–90 days)"
-              className={classNames(
-                "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/60",
-                fieldErrors["notes"] && "border-rose-400 focus:border-rose-400 focus:ring-rose-200",
-              )}
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-            />
+          <div className="flex flex-col items-center justify-between gap-4 border-t border-slate-200 pt-6 text-sm text-slate-500 md:flex-row">
+            <p className="max-w-xl text-center md:text-left">
+              Saving keeps your Mentor aligned with what&apos;s working now so Triumph can unlock the right plays next.
+            </p>
+            <button
+              type="submit"
+              className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-7 py-3 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(79,70,229,0.35)] transition hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-indigo-300"
+              disabled={isSaving}
+            >
+              {isSaving ? "Saving..." : "Save & Return to Dashboard"}
+            </button>
           </div>
-        </div>
-
-        {submissionError ? (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-600">
-            {submissionError}
-          </div>
-        ) : null}
-
-        <div className="flex flex-col items-center justify-between gap-4 border-t border-slate-200 pt-6 text-sm text-slate-500 md:flex-row">
-          <p>
-            Saving keeps your Mentor aligned with what&#39;s working now, so Triumph can unlock the right plays next.
-          </p>
-          <button
-            type="submit"
-            className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-indigo-300"
-            disabled={isSaving}
-          >
-            {isSaving ? "Saving..." : "Save & Return to Dashboard"}
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </section>
   );
 }

@@ -213,14 +213,18 @@ export default function BusinessProfileForm() {
   };
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex flex-col gap-6 px-8 py-10">
-        <div className="max-w-2xl space-y-3">
-          <div className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700">
+    <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-white/5 shadow-[0_45px_140px_rgba(1,9,30,0.35)]">
+      <div className="pointer-events-none absolute inset-0 opacity-60">
+        <div className="absolute -top-32 left-8 h-64 w-64 rounded-full bg-[#004aad]/40 blur-3xl" />
+        <div className="absolute bottom-[-6rem] right-[-4rem] h-80 w-80 rounded-full bg-[#fa9100]/30 blur-[140px]" />
+      </div>
+      <div className="relative flex flex-col gap-8 px-8 py-12 md:px-12">
+        <div className="max-w-2xl space-y-4">
+          <div className="inline-flex items-center rounded-full bg-white/10 px-4 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.32em] text-white/80">
             Business Foundations
           </div>
-          <h2 className="text-2xl font-semibold text-slate-900">Share your business story</h2>
-          <p className="text-sm leading-relaxed text-slate-600">
+          <h2 className="text-3xl font-semibold text-slate-50">Share your business story</h2>
+          <p className="text-sm leading-relaxed text-slate-300">
             Give your Triumph mentor the context they need to champion you throughout the program. A rich profile keeps every planning session, prompt, and milestone aligned with what matters most to your business.
           </p>
         </div>
@@ -231,8 +235,8 @@ export default function BusinessProfileForm() {
             aria-live="polite"
             className={`rounded-2xl border px-4 py-3 text-sm font-medium transition ${
               status.type === "success"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                : "border-red-200 bg-red-50 text-red-700"
+                ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                : "border-rose-400/40 bg-rose-500/15 text-rose-200"
             }`}
           >
             {status.message}
@@ -240,7 +244,7 @@ export default function BusinessProfileForm() {
         ) : null}
 
         {isLoading ? (
-          <p className="text-sm font-medium text-slate-500">Loading your business profile…</p>
+          <p className="text-sm font-medium text-slate-300">Loading your business profile…</p>
         ) : null}
 
         <form
@@ -249,7 +253,7 @@ export default function BusinessProfileForm() {
         >
           <div className="flex flex-col gap-2">
             <label
-              className="text-sm font-semibold text-slate-700"
+              className="text-sm font-semibold text-slate-200"
               htmlFor="business_name"
             >
               Business name
@@ -262,12 +266,12 @@ export default function BusinessProfileForm() {
               value={profile.business_name ?? ""}
               onChange={(event) => handleChange("business_name", event.target.value)}
               disabled={isLoading || isSaving}
-              className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:bg-slate-100"
+              className="h-12 w-full rounded-xl border border-white/15 bg-slate-950/70 px-4 text-sm text-slate-100 shadow-[0_16px_40px_rgba(2,10,36,0.45)] transition focus:border-[#fa9100] focus:outline-none focus:ring-2 focus:ring-[#fa9100]/30 disabled:cursor-not-allowed disabled:bg-slate-900/60"
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-slate-700" htmlFor="industry">
+            <label className="text-sm font-semibold text-slate-200" htmlFor="industry">
               Industry
             </label>
             <input
@@ -278,13 +282,13 @@ export default function BusinessProfileForm() {
               value={profile.industry ?? ""}
               onChange={(event) => handleChange("industry", event.target.value)}
               disabled={isLoading || isSaving}
-              className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:bg-slate-100"
+              className="h-12 w-full rounded-xl border border-white/15 bg-slate-950/70 px-4 text-sm text-slate-100 shadow-[0_16px_40px_rgba(2,10,36,0.45)] transition focus:border-[#fa9100] focus:outline-none focus:ring-2 focus:ring-[#fa9100]/30 disabled:cursor-not-allowed disabled:bg-slate-900/60"
             />
           </div>
 
           <div className="flex flex-col gap-2">
             <label
-              className="text-sm font-semibold text-slate-700"
+              className="text-sm font-semibold text-slate-200"
               htmlFor="business_type"
             >
               Business type
@@ -295,7 +299,7 @@ export default function BusinessProfileForm() {
               value={profile.business_type ?? ""}
               onChange={(event) => handleChange("business_type", event.target.value)}
               disabled={isLoading || isSaving}
-              className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:bg-slate-100"
+              className="h-12 w-full rounded-xl border border-white/15 bg-slate-950/70 px-4 text-sm text-slate-100 shadow-[0_16px_40px_rgba(2,10,36,0.45)] transition focus:border-[#fa9100] focus:outline-none focus:ring-2 focus:ring-[#fa9100]/30 disabled:cursor-not-allowed disabled:bg-slate-900/60"
             >
               <option value="">Select type</option>
               {BUSINESS_TYPE_OPTIONS.map((option) => (
@@ -306,17 +310,17 @@ export default function BusinessProfileForm() {
             </select>
           </div>
 
-          <fieldset className="col-span-full rounded-2xl border border-slate-200 bg-slate-50/60 p-6">
-            <legend className="px-2 text-sm font-semibold uppercase tracking-wide text-indigo-700">
+          <fieldset className="col-span-full rounded-2xl border border-white/10 bg-slate-950/60 p-6">
+            <legend className="px-2 text-sm font-semibold uppercase tracking-[0.28em] text-white/70">
               Top services & programs
             </legend>
-            <p className="mt-2 text-xs text-slate-500">
-              Highlight up to three flagship offers. We&#39;ll reference these individually across materials, recaps, and mentor planning.
+            <p className="mt-2 text-xs text-slate-400">
+              Highlight up to three flagship offers. We’ll reference these individually across materials, recaps, and mentor planning.
             </p>
             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
               {SERVICE_PROGRAM_FIELDS.map(({ key, label, placeholder }) => (
                 <div key={key} className="flex flex-col gap-2">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-600" htmlFor={key}>
+                  <label className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400" htmlFor={key}>
                     {label}
                   </label>
                   <input
@@ -327,7 +331,7 @@ export default function BusinessProfileForm() {
                     value={profile[key] ?? ""}
                     onChange={(event) => handleChange(key, event.target.value)}
                     disabled={isLoading || isSaving}
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:bg-slate-100"
+                    className="h-12 w-full rounded-xl border border-white/10 bg-slate-950/70 px-4 text-sm text-slate-100 shadow-[0_12px_32px_rgba(2,10,36,0.45)] transition focus:border-[#fa9100] focus:outline-none focus:ring-2 focus:ring-[#fa9100]/30 disabled:cursor-not-allowed disabled:bg-slate-900/60"
                   />
                 </div>
               ))}
@@ -336,7 +340,7 @@ export default function BusinessProfileForm() {
 
           <div className="col-span-full flex flex-col gap-2">
             <label
-              className="text-sm font-semibold text-slate-700"
+              className="text-sm font-semibold text-slate-200"
               htmlFor="key_details"
             >
               Program notes & momentum markers
@@ -348,18 +352,18 @@ export default function BusinessProfileForm() {
               value={profile.key_details ?? ""}
               onChange={(event) => handleChange("key_details", event.target.value)}
               disabled={isLoading || isSaving}
-              className="min-h-[160px] w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm leading-6 text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:bg-slate-100"
+              className="min-h-[160px] w-full rounded-2xl border border-white/15 bg-slate-950/70 px-4 py-3 text-sm leading-6 text-slate-100 shadow-[0_20px_50px_rgba(2,10,36,0.45)] transition focus:border-[#fa9100] focus:outline-none focus:ring-2 focus:ring-[#fa9100]/30 disabled:cursor-not-allowed disabled:bg-slate-900/60"
             />
           </div>
 
           <div className="col-span-full flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-400">
               Updates save instantly for your mentor and the Triumph team to reference across the program.
             </p>
             <button
               type="submit"
               disabled={isLoading || isSaving}
-              className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-indigo-600 via-purple-600 to-rose-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:from-indigo-300 disabled:via-purple-300 disabled:to-rose-300"
+              className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#fa9100] via-[#ffb341] to-[#8fd6ff] px-7 py-3 text-sm font-semibold text-slate-950 shadow-[0_25px_70px_rgba(250,145,0,0.35)] transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[#fa9100]/40 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSaving ? "Saving…" : "Save business profile"}
             </button>

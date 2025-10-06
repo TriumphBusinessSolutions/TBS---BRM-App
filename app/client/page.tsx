@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import type { ReactNode } from "react";
 
 import BusinessProfileForm from "./BusinessProfileForm";
 import ModelPanel, {
@@ -8,6 +7,7 @@ import ModelPanel, {
   type MilestoneRow,
   type ModelRow,
 } from "./components/ModelPanel";
+import ClientShell from "./components/ClientShell";
 import { getSupabaseClient } from "../../lib/supabase";
 
 export const metadata: Metadata = {
@@ -20,54 +20,8 @@ type ClientRow = {
   business_information_completed_at?: string | null;
 };
 
-function Layout({
-  children,
-  showBusinessProfileForm,
-}: {
-  children?: ReactNode;
-  showBusinessProfileForm: boolean;
-}) {
-  return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 px-4 py-12">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-10">
-        <header className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white/70 p-6 shadow-sm backdrop-blur md:flex-row md:items-center md:justify-between">
-          <div className="space-y-3">
-            <h1 className="text-3xl font-semibold text-slate-900">Welcome back</h1>
-            <p className="text-base leading-relaxed text-slate-600">
-              This dashboard keeps your Triumph mentor aligned with where your business is today and where you’re headed next.
-              Keep your profile fresh so our program resources stay tailored to your goals.
-            </p>
-          </div>
-          <Link
-            href="/client/settings"
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-400 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-          >
-            <svg
-              aria-hidden
-              viewBox="0 0 24 24"
-              className="h-5 w-5 text-slate-500"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.5}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M10.5 6h3l.879 1.758a2 2 0 0 0 1.341 1.077l1.903.475-1.365 2.047a2 2 0 0 0 0 2.286l1.365 2.047-1.903.475a2 2 0 0 0-1.341 1.077L13.5 18h-3l-.879-1.758a2 2 0 0 0-1.341-1.077l-1.903-.475 1.365-2.047a2 2 0 0 0 0-2.286L7.377 9.31l1.903-.475a2 2 0 0 0 1.341-1.077L10.5 6Z"
-              />
-              <circle cx="12" cy="12" r="2" />
-            </svg>
-            Settings
-          </Link>
-        </header>
-
-        {showBusinessProfileForm ? <BusinessProfileForm /> : null}
-
-        {children}
-      </div>
-    </main>
-  );
-}
+const sectionCardClasses =
+  "relative overflow-hidden rounded-[32px] border border-white/10 bg-white/5 shadow-[0_45px_140px_rgba(1,9,30,0.45)] backdrop-blur";
 
 function groupByModel<T extends { model_id: string }>(rows: T[]) {
   const map = new Map<string, T[]>();
@@ -85,9 +39,9 @@ function renderErrors(errors: string[]) {
   }
 
   return (
-    <div className="rounded-2xl border border-red-200 bg-red-50/80 p-4 text-sm text-red-700 shadow-sm">
-      <p className="font-semibold">There was a problem loading client data.</p>
-      <ul className="mt-2 list-disc space-y-1 pl-5">
+    <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-100 shadow-[0_20px_60px_rgba(112,26,67,0.45)]">
+      <p className="font-semibold text-rose-50">There was a problem loading client data.</p>
+      <ul className="mt-2 list-disc space-y-1 pl-5 text-rose-100/90">
         {errors.map((message, index) => (
           <li key={index}>{message}</li>
         ))}
@@ -96,30 +50,27 @@ function renderErrors(errors: string[]) {
   );
 }
 
-const overviewHeader = (
-  <div className="space-y-2">
-    <h2 className="text-xl font-semibold tracking-tight text-slate-900">My BRM Progress</h2>
-    <p className="text-sm text-slate-600">
-      Snapshot of models, milestones, and KPIs aligned to your current Triumph plan.
-    </p>
-  </div>
-);
-
 function BusinessInformationPrompt({ href }: { href: string }) {
   return (
-    <section className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
-      <h3 className="text-lg font-semibold">Complete your business information</h3>
-      <p className="mt-2 text-sm">
-        Tell us about your business so we can tailor your BRM roadmap and surface the most relevant
-        models, milestones, and KPIs for you.
-      </p>
-      <Link
-        href={href}
-        className="mt-4 inline-flex items-center justify-center rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600"
-      >
-        Fill out the Business Information form
-      </Link>
-    </section>
+    <div className="relative overflow-hidden rounded-2xl border border-dashed border-white/20 bg-white/5 p-6 text-slate-100 shadow-[0_25px_90px_rgba(1,9,30,0.4)]">
+      <div className="pointer-events-none absolute inset-0 opacity-60">
+        <div className="absolute -top-16 right-0 h-44 w-44 rounded-full bg-[#fa9100]/25 blur-[120px]" />
+        <div className="absolute bottom-[-5rem] left-[-3rem] h-52 w-52 rounded-full bg-[#004aad]/30 blur-[140px]" />
+      </div>
+      <div className="relative space-y-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/70">Business profile</p>
+        <h3 className="text-lg font-semibold text-slate-50">Complete your business information</h3>
+        <p className="text-sm leading-relaxed text-slate-200/80">
+          Share your core offers, audience, and program details so your Triumph mentor can personalize every checkpoint.
+        </p>
+        <Link
+          href={href}
+          className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#fa9100] via-[#ffb341] to-[#8fd6ff] px-6 py-2.5 text-sm font-semibold text-slate-950 shadow-[0_25px_70px_rgba(250,145,0,0.35)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:w-auto"
+        >
+          Go to settings
+        </Link>
+      </div>
+    </div>
   );
 }
 
@@ -132,12 +83,16 @@ export default async function ClientDashboardPage() {
     ];
 
     return (
-      <Layout showBusinessProfileForm>
-        {renderErrors(errors)}
-        <p className="text-sm text-slate-500">
-          Unable to load client data because Supabase environment variables are missing.
-        </p>
-      </Layout>
+      <ClientShell>
+        <section className={`${sectionCardClasses} px-8 py-10`}>
+          <div className="space-y-4">
+            {renderErrors(errors)}
+            <p className="text-sm text-slate-300/80">
+              Unable to load client data because Supabase environment variables are missing.
+            </p>
+          </div>
+        </section>
+      </ClientShell>
     );
   }
 
@@ -175,10 +130,14 @@ export default async function ClientDashboardPage() {
 
   if (!client) {
     return (
-      <Layout showBusinessProfileForm>
-        {renderErrors(errors)}
-        <p className="text-sm text-slate-500">No client found.</p>
-      </Layout>
+      <ClientShell>
+        <section className={`${sectionCardClasses} px-8 py-10`}>
+          <div className="space-y-4">
+            {renderErrors(errors)}
+            <p className="text-sm text-slate-300/80">No client found.</p>
+          </div>
+        </section>
+      </ClientShell>
     );
   }
 
@@ -218,6 +177,43 @@ export default async function ClientDashboardPage() {
   const milestonesByModel = groupByModel(milestones);
   const kpisByModel = groupByModel(kpis);
 
+  const totalMilestones = milestones.length;
+  const completedMilestones = milestones.filter((milestone) => milestone.done).length;
+  const milestoneCompletion =
+    totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
+  const upcomingMilestones = milestones.filter((milestone) => !milestone.done).length;
+  const trackedKpis = kpis.filter((kpi) => kpi.target != null || kpi.value != null);
+  const onTrackKpis = trackedKpis.filter(
+    (kpi) => kpi.target != null && kpi.value != null && Number(kpi.value) >= Number(kpi.target),
+  ).length;
+
+  const summaryCards = [
+    {
+      title: "Models in motion",
+      value: models.length,
+      description: "Active BRM pillars guiding your progress right now.",
+      tint: "bg-[#fa9100]/35",
+    },
+    {
+      title: "Milestone completion",
+      value: `${milestoneCompletion}%`,
+      description: `${completedMilestones} of ${totalMilestones || 0} steps complete across all models.`,
+      tint: "bg-[#8fd6ff]/35",
+    },
+    {
+      title: "Upcoming milestones",
+      value: upcomingMilestones,
+      description: "Keep momentum by closing out these next high-impact tasks.",
+      tint: "bg-[#004aad]/35",
+    },
+    {
+      title: "KPIs with targets",
+      value: trackedKpis.length,
+      description: `${onTrackKpis} currently meeting or exceeding goals.`,
+      tint: "bg-[#ffb341]/35",
+    },
+  ];
+
   const showBusinessInformationPrompt =
     businessInfoFieldAvailable && client.business_information_completed_at == null;
   const businessInformationFormHref = "/client/settings";
@@ -225,15 +221,180 @@ export default async function ClientDashboardPage() {
   const showBusinessProfileForm =
     businessInfoFieldAvailable && client.business_information_completed_at == null;
 
+  const introTitle = showBusinessProfileForm ? "Let's get your business ready" : "Welcome back";
+  const introSubtitle = showBusinessProfileForm
+    ? "Complete your business information so we can tailor your Triumph BRM journey to the goals that matter most."
+    : "This dashboard keeps your Triumph mentor aligned with where your business is today and where you’re headed next. Keep your profile fresh so our program resources stay tailored to your goals.";
+  const nextStepTitle = showBusinessProfileForm ? "Complete your business profile" : "Share your latest updates";
+  const nextStepDescription = showBusinessProfileForm
+    ? "A filled-in profile unlocks personalized models, KPIs, and mentor prompts for your launch."
+    : "Refreshing your details keeps Triumph mentors focused on the momentum that matters most.";
+
+  const quickStats = [
+    {
+      title: "Profile status",
+      value: showBusinessProfileForm ? "Setup needed" : "Profile synced",
+      description: showBusinessProfileForm
+        ? "Add your business foundations so we can personalize your roadmap."
+        : "Your mentor is working with your latest snapshot—keep it rolling!",
+      tint: "bg-[#fa9100]/35",
+    },
+    {
+      title: "Mentor alignment",
+      value: showBusinessProfileForm ? "Kickoff pending" : "Active guidance",
+      description: showBusinessProfileForm
+        ? "Finish onboarding to activate Triumph mentor support."
+        : "Expect proactive nudges and resources tuned to your journey.",
+      tint: "bg-[#004aad]/40",
+    },
+    {
+      title: "Workspace focus",
+      value: showBusinessProfileForm ? "Start with Business Profile" : "Review models weekly",
+      description: showBusinessProfileForm
+        ? "Set the tone for your BRM workspace by sharing your core offers."
+        : "Celebrate wins, adjust KPIs, and plan the next momentum markers.",
+      tint: "bg-[#8fd6ff]/40",
+    },
+  ];
+
   return (
-    <Layout showBusinessProfileForm={showBusinessProfileForm}>
-      <section className="rounded-3xl border border-slate-200 bg-white/80 p-8 shadow-lg backdrop-blur">
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            {overviewHeader}
-            <div className="text-sm text-slate-500">
-              Client: <span className="font-medium text-slate-900">{client.name}</span>
+    <ClientShell>
+      <section className={`${sectionCardClasses} px-8 py-12 md:px-12`}>
+        <div className="pointer-events-none absolute inset-0 opacity-70">
+          <div className="absolute -top-24 right-0 h-64 w-64 rounded-full bg-[#fa9100]/30 blur-[140px]" />
+          <div className="absolute bottom-[-8rem] left-[-4rem] h-72 w-72 rounded-full bg-[#004aad]/40 blur-[160px]" />
+        </div>
+        <div className="relative flex flex-col gap-10 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl space-y-6">
+            <span className="inline-flex items-center rounded-full bg-white/10 px-4 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.32em] text-white/80">
+              Triumph client workspace
+            </span>
+            <div className="space-y-4">
+              <h1 className="text-3xl font-semibold md:text-4xl">{introTitle}</h1>
+              <p className="text-base leading-relaxed text-slate-200/80">{introSubtitle}</p>
             </div>
+            <ul className="grid gap-3 text-sm text-slate-200/90 sm:grid-cols-2">
+              <li className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 shadow-[0_20px_60px_rgba(2,10,36,0.4)]">
+                <span className="mt-1 h-2.5 w-2.5 rounded-full bg-[#fa9100]" aria-hidden />
+                <div className="space-y-1">
+                  <p className="font-semibold text-slate-100">Guided growth checkpoints</p>
+                  <p className="text-xs text-slate-300/90">Follow curated milestones co-created with Triumph mentors.</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 shadow-[0_20px_60px_rgba(2,10,36,0.4)]">
+                <span className="mt-1 h-2.5 w-2.5 rounded-full bg-[#8fd6ff]" aria-hidden />
+                <div className="space-y-1">
+                  <p className="font-semibold text-slate-100">Revenue clarity at a glance</p>
+                  <p className="text-xs text-slate-300/90">Track KPIs, services, and wins without leaving your workspace.</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div className="flex w-full max-w-sm flex-col gap-4 text-sm lg:w-auto">
+            <div className="rounded-3xl border border-white/10 bg-white/10 px-5 py-4 text-left text-slate-100 shadow-[0_25px_80px_rgba(2,10,36,0.45)]">
+              <p className="text-xs uppercase tracking-[0.32em] text-white/60">Next step</p>
+              <p className="mt-2 text-base font-semibold text-white">{nextStepTitle}</p>
+              <p className="mt-3 text-xs leading-relaxed text-slate-200/80">{nextStepDescription}</p>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-slate-950/60 px-5 py-4 text-left text-slate-200 shadow-[0_25px_80px_rgba(2,10,36,0.45)]">
+              <p className="text-xs uppercase tracking-[0.32em] text-white/60">Client</p>
+              <p className="mt-2 text-base font-semibold text-white">{client.name}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className={`${sectionCardClasses} px-8 py-10`}>
+        <div className="pointer-events-none absolute inset-0 opacity-50">
+          <div className="absolute -top-20 left-0 h-60 w-60 rounded-full bg-[#8fd6ff]/30 blur-[140px]" />
+        </div>
+        <div className="relative space-y-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/70">Workspace snapshot</p>
+              <h2 className="text-xl font-semibold text-slate-50">Your current status</h2>
+            </div>
+            <p className="max-w-sm text-sm text-slate-300/80">
+              Glance at the health of your onboarding, mentor alignment, and weekly focus to stay on track.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {quickStats.map((stat) => (
+              <article
+                key={stat.title}
+                className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 text-sm shadow-[0_35px_120px_rgba(1,9,30,0.4)]"
+              >
+                <div className="pointer-events-none absolute inset-0 opacity-70">
+                  <div className={`absolute -top-10 right-0 h-36 w-36 rounded-full ${stat.tint} blur-3xl`} />
+                </div>
+                <div className="relative space-y-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/70">{stat.title}</p>
+                  <p className="text-2xl font-semibold text-slate-100">{stat.value}</p>
+                  <p className="text-xs text-slate-300/90">{stat.description}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {showBusinessProfileForm ? (
+        <BusinessProfileForm />
+      ) : (
+        <section className={`${sectionCardClasses} px-8 py-10`}>
+          <div className="pointer-events-none absolute inset-0 opacity-60">
+            <div className="absolute -top-16 right-0 h-56 w-56 rounded-full bg-[#fa9100]/25 blur-[140px]" />
+          </div>
+          <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div className="max-w-xl space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/70">Business profile</p>
+              <h2 className="text-2xl font-semibold text-slate-50">Your mentor has the latest details</h2>
+              <p className="text-sm leading-relaxed text-slate-300/85">
+                Keep momentum by refreshing your services, goals, and program notes whenever things shift. Updates save instantly for your Triumph mentor.
+              </p>
+            </div>
+            <Link
+              href="/client/settings"
+              className="inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            >
+              Review profile in settings
+            </Link>
+          </div>
+        </section>
+      )}
+
+      <section className={`${sectionCardClasses} px-8 py-10`}>
+        <div className="pointer-events-none absolute inset-0 opacity-60">
+          <div className="absolute -top-20 left-[-4rem] h-64 w-64 rounded-full bg-[#004aad]/35 blur-[160px]" />
+          <div className="absolute bottom-[-6rem] right-[-3rem] h-60 w-60 rounded-full bg-[#fa9100]/30 blur-[140px]" />
+        </div>
+        <div className="relative space-y-8">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.32em] text-white/70">Program progress</p>
+              <h2 className="text-2xl font-semibold text-slate-50">Growth models overview</h2>
+            </div>
+            <p className="max-w-md text-sm text-slate-300/80">
+              Track how each model is advancing so you and your Triumph mentor can prioritize the milestones that unlock the biggest wins.
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {summaryCards.map((card) => (
+              <article
+                key={card.title}
+                className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-5 text-sm shadow-[0_30px_110px_rgba(1,9,30,0.4)]"
+              >
+                <div className="pointer-events-none absolute inset-0 opacity-70">
+                  <div className={`absolute -top-10 right-0 h-32 w-32 rounded-full ${card.tint} blur-3xl`} />
+                </div>
+                <div className="relative space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/70">{card.title}</p>
+                  <p className="text-3xl font-semibold text-slate-100">{card.value}</p>
+                  <p className="text-xs text-slate-300/90">{card.description}</p>
+                </div>
+              </article>
+            ))}
           </div>
 
           {renderErrors(errors)}
@@ -243,13 +404,16 @@ export default async function ClientDashboardPage() {
           ) : null}
 
           {models.length === 0 ? (
-            <p className="text-sm text-slate-500">
-              {showBusinessInformationPrompt
-                ? "We’ll populate your BRM plan after you complete the Business Information form."
-                : "No models yet."}
-            </p>
+            <div className="rounded-3xl border border-dashed border-white/15 bg-white/5 p-10 text-center text-sm text-slate-300/90 shadow-[0_30px_110px_rgba(1,9,30,0.4)]">
+              <p className="font-medium text-slate-100">You&apos;re all set to begin.</p>
+              <p className="mt-2 text-slate-300/80">
+                {showBusinessInformationPrompt
+                  ? "We’ll populate your BRM plan after you complete the Business Information form."
+                  : "Add your first model to start tracking milestones and KPIs."}
+              </p>
+            </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {models.map((model) => (
                 <ModelPanel
                   key={model.id}
@@ -262,6 +426,6 @@ export default async function ClientDashboardPage() {
           )}
         </div>
       </section>
-    </Layout>
+    </ClientShell>
   );
 }

@@ -20,19 +20,48 @@ type ClientRow = {
   business_information_completed_at?: string | null;
 };
 
-function Layout({ children }: { children?: ReactNode }) {
+function Layout({
+  children,
+  showBusinessProfileForm,
+}: {
+  children?: ReactNode;
+  showBusinessProfileForm: boolean;
+}) {
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 px-4 py-12">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-10">
-        <header className="space-y-3">
-          <h1 className="text-3xl font-semibold text-slate-900">Welcome back</h1>
-          <p className="text-base leading-relaxed text-slate-600">
-            This dashboard keeps your Triumph mentor aligned with where your business is today and where you’re headed next.
-            Keep your profile fresh so our program resources stay tailored to your goals.
-          </p>
+        <header className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white/70 p-6 shadow-sm backdrop-blur md:flex-row md:items-center md:justify-between">
+          <div className="space-y-3">
+            <h1 className="text-3xl font-semibold text-slate-900">Welcome back</h1>
+            <p className="text-base leading-relaxed text-slate-600">
+              This dashboard keeps your Triumph mentor aligned with where your business is today and where you’re headed next.
+              Keep your profile fresh so our program resources stay tailored to your goals.
+            </p>
+          </div>
+          <Link
+            href="/client/settings"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-400 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+          >
+            <svg
+              aria-hidden
+              viewBox="0 0 24 24"
+              className="h-5 w-5 text-slate-500"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M10.5 6h3l.879 1.758a2 2 0 0 0 1.341 1.077l1.903.475-1.365 2.047a2 2 0 0 0 0 2.286l1.365 2.047-1.903.475a2 2 0 0 0-1.341 1.077L13.5 18h-3l-.879-1.758a2 2 0 0 0-1.341-1.077l-1.903-.475 1.365-2.047a2 2 0 0 0 0-2.286L7.377 9.31l1.903-.475a2 2 0 0 0 1.341-1.077L10.5 6Z"
+              />
+              <circle cx="12" cy="12" r="2" />
+            </svg>
+            Settings
+          </Link>
         </header>
 
-        <BusinessProfileForm />
+        {showBusinessProfileForm ? <BusinessProfileForm /> : null}
 
         {children}
       </div>
@@ -103,7 +132,7 @@ export default async function ClientDashboardPage() {
     ];
 
     return (
-      <Layout>
+      <Layout showBusinessProfileForm>
         {renderErrors(errors)}
         <p className="text-sm text-slate-500">
           Unable to load client data because Supabase environment variables are missing.
@@ -146,7 +175,7 @@ export default async function ClientDashboardPage() {
 
   if (!client) {
     return (
-      <Layout>
+      <Layout showBusinessProfileForm>
         {renderErrors(errors)}
         <p className="text-sm text-slate-500">No client found.</p>
       </Layout>
@@ -191,10 +220,13 @@ export default async function ClientDashboardPage() {
 
   const showBusinessInformationPrompt =
     businessInfoFieldAvailable && client.business_information_completed_at == null;
-  const businessInformationFormHref = "/client/business-information";
+  const businessInformationFormHref = "/client/settings";
+
+  const showBusinessProfileForm =
+    businessInfoFieldAvailable && client.business_information_completed_at == null;
 
   return (
-    <Layout>
+    <Layout showBusinessProfileForm={showBusinessProfileForm}>
       <section className="rounded-3xl border border-slate-200 bg-white/80 p-8 shadow-lg backdrop-blur">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

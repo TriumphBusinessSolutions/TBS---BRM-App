@@ -1,4 +1,6 @@
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
+import ActiveClientSync from "./ActiveClientSync";
 import PromptGenerator, { PromptContextItem } from "./PromptGenerator";
 import { getServerClient } from "@/lib/supabase-server";
 import type { PostgrestError } from "@supabase/supabase-js";
@@ -281,6 +283,20 @@ export default async function ClientDashboardPage({ params }: PageProps) {
 
   const clientName = client?.name ?? "Client";
 
+  const cookieStore = cookies();
+  cookieStore.set({
+    name: "active_client_id",
+    value: clientId,
+    path: "/",
+    sameSite: "lax",
+  });
+  cookieStore.set({
+    name: "active_client_name",
+    value: encodeURIComponent(clientName),
+    path: "/",
+    sameSite: "lax",
+  });
+
   const unlockedLevels = new Set<LevelKey>();
   (models ?? []).forEach((model) => {
     const normalized = normalizeLevel(model.level ?? null);
@@ -300,6 +316,7 @@ export default async function ClientDashboardPage({ params }: PageProps) {
 
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-8 p-6">
+      <ActiveClientSync clientId={clientId} clientName={clientName} />
       <header className="space-y-2">
         <p className="text-sm font-medium text-slate-500">Client Dashboard</p>
         <h1 className="text-2xl font-bold text-slate-900">{clientName}</h1>

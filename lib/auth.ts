@@ -5,8 +5,8 @@ import type { Database } from "@/types/supabase";
 export type SupportedUserRole = "mentor_admin" | "mentor" | "client";
 
 const ROLE_DESTINATION_MAP: Record<SupportedUserRole, string> = {
-  mentor_admin: "/mentor",
-  mentor: "/mentor",
+  mentor_admin: "/mentor/home",
+  mentor: "/mentor/home",
   client: "/client",
 };
 

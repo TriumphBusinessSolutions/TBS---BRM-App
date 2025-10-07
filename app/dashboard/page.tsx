@@ -4,9 +4,6 @@ import { redirect } from "next/navigation";
 import { PENDING_APPROVAL_ROUTE, resolveRoleRedirect } from "@/lib/auth";
 import { getServerClient } from "@/lib/supabase-server";
 
-import "./dashboard.css";
-import DashboardClient from "./DashboardClient";
-
 export const metadata: Metadata = {
   title: "Dashboard | Business Revenue Model App",
 };
@@ -15,7 +12,7 @@ export default async function DashboardPage() {
   const supabase = getServerClient();
 
   if (!supabase) {
-    return <DashboardClient />;
+    redirect("/mentor/home");
   }
 
   const {
@@ -33,6 +30,5 @@ export default async function DashboardPage() {
     console.error("[dashboard] Failed to resolve role redirect", error);
     redirect(PENDING_APPROVAL_ROUTE);
   }
-
-  return <DashboardClient />;
+  return null;
 }

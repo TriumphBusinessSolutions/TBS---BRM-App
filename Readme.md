@@ -13,6 +13,11 @@ The app uses the Next.js App Router located in the `app/` directory. Update page
 
 ⸻
 
+### Role-based dashboards
+
+Different Supabase roles land on dedicated workspaces. See [docs/role-portals.md](docs/role-portals.md) for the redirect map, source files, and notes about each experience.
+
+⸻
 
 
 Triumph BRM Companion App

@@ -1,0 +1,30 @@
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at top right, rgba(37, 99, 235, 0.08), transparent 55%),
+    var(--color-surface-subtle);
+}
+
+.main {
+  flex: 1;
+  padding: var(--space-6) clamp(var(--space-4), 6vw, var(--space-8));
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+@media (min-width: 960px) {
+  .main {
+    margin-left: 0;
+    max-width: none;
+    padding-block: var(--space-7);
+    padding-inline: var(--space-7);
+  }
+}
+
+@media (min-width: 1200px) {
+  .main {
+    padding-inline: var(--space-8);
+  }
+}

@@ -125,25 +125,27 @@ export async function loadMentorDashboardData(): Promise<MentorDashboardData> {
       }
     }
   } else {
-    implementations = ((implementationsRes.data ?? []) as Record<string, unknown>[])
-      .map((row) => {
-        const id = safeText(row.id) ?? String(row.id ?? "");
-        const clientId = safeText(row.client_id) ?? "";
+    implementations = ((implementationsRes.data ?? []) as Record<string, unknown>[]).reduce<
+      MentorImplementationRow[]
+    >((acc, row) => {
+      const id = safeText(row.id) ?? String(row.id ?? "");
+      const clientId = safeText(row.client_id) ?? "";
 
-        if (!id || !clientId) {
-          return null;
-        }
+      if (!id || !clientId) {
+        return acc;
+      }
 
-        return {
-          id,
-          client_id: clientId,
-          title: safeText(row.title) ?? safeText((row as Record<string, unknown>)["name"]) ?? "Implementation task",
-          scheduled_for: safeDate(row.scheduled_for) ?? safeDate((row as Record<string, unknown>)["scheduled_at"]),
-          status: safeText(row.status) ?? safeText((row as Record<string, unknown>)["state"]),
-          notes: safeText(row.notes),
-        } satisfies MentorImplementationRow;
-      })
-      .filter((value): value is MentorImplementationRow => value != null);
+      acc.push({
+        id,
+        client_id: clientId,
+        title: safeText(row.title) ?? safeText((row as Record<string, unknown>)["name"]) ?? "Implementation task",
+        scheduled_for: safeDate(row.scheduled_for) ?? safeDate((row as Record<string, unknown>)["scheduled_at"]),
+        status: safeText(row.status) ?? safeText((row as Record<string, unknown>)["state"]),
+        notes: safeText(row.notes),
+      });
+
+      return acc;
+    }, []);
   }
 
   let messages: MentorMessageRow[] = [];
